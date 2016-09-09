@@ -300,10 +300,12 @@ class importAlf():
                 This.logger(This.conf['dir'] + " : OK.", "Success")
 
                 This.ButtonGenerate['state'] = "active"
+                This.ButtonTestHost['state'] = "active"
                 This.UpdateGuide("Etape 2 : Générez le package")
             else:
                 This.logger("\n"+This.conf['dir'] + " : Erreur.", "Error")
                 This.ButtonGenerate['state'] = "disabled"
+                This.ButtonTestHost['state'] = "disabled"
                 This.Host['state'] = "disabled"
                 This.ButtonUpload['state'] = "disabled"
 
@@ -339,6 +341,10 @@ class importAlf():
                 This.ButtonUpload['text'] = "Importer (mode Bulk Import)"
             else:
                 This.ButtonUpload['text'] = "Mettre à jour (mode CMIS)"
+        
+        def CommandTestHost():
+            mode = "BULKIMPORTTOOL"
+            TestHost = This.OpenHost(mode)
         
         def CommandConfGlobale():
             def SaveConf():
@@ -473,7 +479,7 @@ class importAlf():
 
         # Traitement des documents
         # Bouton du traitement
-        This.ButtonGenerate = Button(FM, text='Générer les documents', command=CommandGenerate, font=buttonfont, relief=RAISED)
+        This.ButtonGenerate = Button(FM, text='Générer le package', command=CommandGenerate, font=buttonfont, relief=RAISED)
         This.ButtonGenerate.config(state=DISABLED)
 
         # Choix du host
@@ -493,6 +499,9 @@ class importAlf():
         # Bouton d'upload
         This.ButtonUpload = Button(FM, text='Importer (mode Bulk Import)', command=CommandUpload, font=buttonfont, relief=RAISED)
         This.ButtonUpload.config(state=DISABLED)
+        
+        This.ButtonTestHost = Button(FM, text='Test connexions', command=CommandTestHost, font=buttonfont, relief=RAISED)
+        This.ButtonTestHost.config(state=DISABLED)
         
         This.var1 = IntVar()
         This.Force = Checkbutton(FM2, text = "Mise à jour uniquement (CMIS)", highlightthickness="0", font="forcefont", variable = This.var1 , command=ChangeMode)
@@ -517,6 +526,7 @@ class importAlf():
         #This.Host.pack(side=LEFT, anchor=W,fill=X, expand=YES)
         #ButtonPackage.pack(side=LEFT, anchor=W, fill=X, expand=YES)
         This.ButtonGenerate.pack(side=LEFT, anchor=W, fill=X, expand=YES)
+        This.ButtonTestHost.pack(side=LEFT, anchor=W, fill=X, expand=YES)
         This.ButtonUpload.pack(side=LEFT, anchor=W, fill=X, expand=YES)
         FM.pack(fill=X)
         FM2.pack(fill=X)
@@ -554,15 +564,51 @@ class importAlf():
         except Exception, e:
             return [False,path + "' : Introuvable", ""]
 
+    def testCMIS(This):
+        try:
+            client = CmisClient(This.conf['url'], This.conf['user'], This.conf['password'])
+
+            repo = client.defaultRepository
+            REQ = "select * from cmis:folder where cmis:name = 'Sites'"
+
+            results = repo.query(REQ)
+            
+            if (len(results) != 0):
+                return str(results[0].id)
+            else:
+                return False
+        except Exception, e:
+            This.logger(str(e),"Error")
+            return False
+        
+    def testBulkImport(This):
+        try:
+            rh = RESTHelper()
+            rh.login(This.conf['user'], This.conf['password'], This.conf['host'], 8080)
+            return True
+        except Exception, e:
+            This.logger(str(e),"Error")
+            return False
+    
     def OpenHost(This, mode):
         This.Logger.delete('1.0', END)
-        
         if ( This.conf['host'] != "" ):
             This.conf['url'] = This.conf['urltemp'].replace("__HOST__", This.conf['host'])
-            if (os.path.exists(This.conf['dir'] + "Conf/package.conf") and This.Bar['value'] > 0):
-                testhost = This.getImportId()
-                LOG = "Test connexion Alfresco ("+This.conf['host']+")"
-                if (testhost != False):
+            LOG = "Test connexion Bulk Import Tool ("+This.conf['host']+")"
+            testbulkimport = This.testBulkImport()
+            
+            if ( testbulkimport ):
+                This.logger("Test connexion Bulk Import Tool : OK","Success")
+            else:
+                This.logger("Test connexion Bulk Import Tool : Error","Error")
+                return False
+            
+            if (os.path.exists(This.conf['dir'] + "Conf/package.conf")):
+                
+                LOG = "Test connexion CMIS Alfresco ("+This.conf['host']+")"
+                testhost = This.testCMIS()
+                
+                if (testhost != False ):
                     This.logger(LOG+" : OK","Success")
                     This.logger("\nTest des destinations du CSV :\n","")
 
@@ -594,8 +640,8 @@ class importAlf():
                 else:
                     This.Force['state'] = "disabled"
                     This.var1.set(0)
-                    This.logger("\nTest des destinations : dossiers manquants (sans conséquences en mode Bulk Import Tool)","Error")
-                    This.logger("\nRelancez en mode Bulk Import Tool)","")
+                    This.logger("\nTest des destinations : dossiers manquants (sans conséquences en mode Bulk Import Tool)","")
+                    This.logger("\nPour le mode CMIS (mise à jour), le mode Bulk Import Tool doit être lancé en premier)","")
                     This.ButtonUpload['text'] = "Importer (mode Bulk Import)"
                     if ( mode == "BULKIMPORTTOOL" ):
                         return True
@@ -808,23 +854,6 @@ class importAlf():
         else:
             return False
 
-    def getImportId(This):
-        try:
-            client = CmisClient(This.conf['url'], This.conf['user'], This.conf['password'])
-
-            repo = client.defaultRepository
-            REQ = "select * from cmis:folder where cmis:name = 'Imports'"
-
-            results = repo.query(REQ)
-            
-            if (len(results) != 0):
-                return str(results[0].id)
-            else:
-                return False
-        except Exception, e:
-            This.logger(str(e),"Error")
-            return False
-        
     def getSitesId(This):
         try:
             client = CmisClient(This.conf['url'], This.conf['user'], This.conf['password'])
