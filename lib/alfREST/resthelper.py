@@ -229,7 +229,23 @@ class RESTHelper(object):
             users = pythonizeJson(res.read())['data']
             return users
         return False
+    
+    @restfuldoc
+    def loginbulkimport(self, username, password, host="127.0.0.1", port="8080"):
 
+        self.host = host
+        self.port = port
+        jsonDict = dict(username=username, password=password)
+        method, url = parseComm(LOGINBULKIMPORT[1])
+        res = self.request(method, url, json=repr(jsonDict))
+        if res is not None:
+            data = res.read()
+            json = pythonizeJson(data)
+            self.ticket = json["data"]["ticket"]
+            logger.info("Alfresco Bulk Import Tool login.")
+            return True
+        return False
+    
     @restfuldoc
     def initiateBulkImport(self, sourceDirectory, targetPath):
         params = {'sourceDirectory': sourceDirectory, 'targetPath': targetPath}
