@@ -26,6 +26,7 @@ import tkFont
 import ttk
 import uuid
 import json
+import time
 
 import paramiko
 from contextlib import closing
@@ -133,7 +134,6 @@ class importAlf():
         This.confpack['title'] = int(config.get("PACKAGE", "TITLE"))
         This.confpack['desc'] = int(config.get("PACKAGE", "DESC"))
         This.confpack['tags'] = int(config.get("PACKAGE", "TAGS"))
-        This.confpack['wkspace'] = int(config.get("PACKAGE", "DESTWSP"))
         This.confpack['path'] = int(config.get("PACKAGE", "DESTPATH"))
         return This.confpack
 
@@ -238,7 +238,6 @@ class importAlf():
                 title = unicode(fields[This.confpack['title']], "iso8859_1")
                 description = unicode(fields[This.confpack['desc']], "iso8859_1")
                 tags = unicode(fields[This.confpack['tags']], "iso8859_1")
-                wkspace = unicode(fields[This.confpack['wkspace']], "iso8859_1")
                 path = unicode(fields[This.confpack['path']], "iso8859_1")
 
                 This.logger("\nVérification correspondance des champs :\n","")
@@ -250,7 +249,6 @@ class importAlf():
                 This.logger("  DESC        | "+description,"")
                 This.logger("  TAGS        | "+tags,"")
                 This.logger("  DESTPATH    | "+path,"")
-                This.logger("  DESTWKS     | "+wkspace,"")
 
                 check_package_conf = True
             else:
@@ -564,8 +562,17 @@ class importAlf():
             rh = RESTHelper()
             rh.login(This.conf['user'], This.conf['password'], This.conf['host'], 8080)
             data = rh.statusbulkimport()
-            print json.load(data)
             return True
+        except Exception, e:
+            This.logger(str(e),"Error")
+            return False
+    
+    def getStatusBulkImport(This):
+        try:
+            rh = RESTHelper()
+            rh.login(This.conf['user'], This.conf['password'], This.conf['host'], 8080)
+            data = rh.statusbulkimport()
+            return json.load(data)
         except Exception, e:
             This.logger(str(e),"Error")
             return False
@@ -647,7 +654,6 @@ class importAlf():
                 title = unicode(row[This.confpack['title']], "iso8859_1")
                 description = unicode(row[This.confpack['desc']], "iso8859_1")
                 tags = unicode(row[This.confpack['tags']], "iso8859_1").split(",")
-                wkspace = unicode(row[This.confpack['wkspace']], "iso8859_1")
                 path = unicode(row[This.confpack['path']], "iso8859_1")
                 upath = row[This.confpack['path']].decode('iso8859_1').encode('utf-8')
 
@@ -665,7 +671,6 @@ class importAlf():
                 This.fileinfo[idx]['bname'] = bname
                 This.fileinfo[idx]['bnewname'] = bnewname
 
-                This.fileinfo[idx]['wkspace'] = wkspace
                 This.fileinfo[idx]['path'] = path
                 This.fileinfo[idx]['upath'] = upath
 
@@ -1012,6 +1017,34 @@ class importAlf():
         except Exception, e:
             This.logger(str(e),"Error")
             return False
+        
+    def returnStatus(This, result):
+        tag=""
+        
+        This.logger("\n - Package                       : "+str(result['sourceParameters']['Source Directory']),"")
+        
+        status = "En attente"
+            
+        if ( str(result['processingState']) == "Failed" ):
+            status = "Echoué"
+            tag="Error"
+
+        if ( str(result['processingState']) == "Succeeded" ):
+            status = "Succès"
+            tag="Success"
+        
+        This.logger(" - Statut                        : "+status,tag)
+        This.logger(" - Durée du traitement           : "+str(result['duration']),"")
+        This.logger(" - Taille doc. importés (octets) : "+str(result['targetCounters']['Bytes imported']['Count']),"")
+        
+        if ( result['inProgress'] == False ):
+            progress = "Terminé"
+        else:
+            progress = "En cours"
+        
+        This.logger(" - Progression                   : "+progress+"\n",tag)
+            
+        return result['inProgress']
     
     def initiateBulkImport(This):
         This.logger("\nTransfert du package sur "+This.conf['host']+" (Bulk Import Tool). Patientez...\n","")
@@ -1023,8 +1056,14 @@ class importAlf():
 
             try:
                 rh.initiateBulkImport(This.conf['importdir']+"/"+This.confpack['PKGID']+"/","/")
-                This.logger("Initialisation de l'import (Bulk Import Tool)\n","Success")
-                This.logger("Voir le statut : http://"+This.conf['host']+":"+This.conf['port']+"/alfresco/s/bulk/import/status\n","")
+                This.logger("Initialisation de l'import (Bulk Import Tool)","Success")
+                
+                result = This.getStatusBulkImport()
+                while ( This.returnStatus(result) ):
+                    time.sleep(2)
+                    This.Logger.delete('8.0', END)
+                    result = This.getStatusBulkImport()
+             
                 return True
             except Exception, e:
                 This.logger(str(e),"Error")
