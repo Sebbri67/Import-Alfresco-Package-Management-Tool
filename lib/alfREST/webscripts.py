@@ -27,22 +27,13 @@ Returns the new authentication ticket.
 "POST /alfresco/service/api/login"
 )
 
-LOGINBULKIMPORT = (
+STATUSBULKIMPORT = (
 """
-Login and establish a ticket.
+Get status
 
-Input
-    JSON Data Object.
-
-username
-    cleartext username
-
-password
-    cleartext password
-
-Returns the new authentication ticket.
+Return JSON
 """,
-"POST /alfresco/s/bulk/import"
+"GET /alfresco/s/bulk/import/status.json"
 )
 
 LOGOUT = (

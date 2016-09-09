@@ -25,6 +25,7 @@ import tkFileDialog
 import tkFont
 import ttk
 import uuid
+import json
 
 import paramiko
 from contextlib import closing
@@ -137,10 +138,11 @@ class importAlf():
         return This.confpack
 
     # Logger
-    def logger(This, txt, tag):
-        This.Logger.insert("end", txt + "\n",tag)
-        This.Logger.see("end")
-        This.Treatment.update()
+    def logger(This, txt, tag, silence=False):
+        if ( silence == False ):
+            This.Logger.insert("end", txt + "\n",tag)
+            This.Logger.see("end")
+            This.Treatment.update()
 
     # Generate and get the packageId
     def get_packageid(This):
@@ -315,11 +317,9 @@ class importAlf():
             if ( This.var1.get() == 1 ):
                 mode = "CMIS"
             
-            TestHost = This.OpenHost(mode)
+            TestHost = This.OpenHost(mode,True)
             
             if ( TestHost ):
-                This.conf['wkimports'] = This.getImportId()
-
                 if (os.path.exists(This.conf['dir'] + "Conf/package.conf")):
                     if ( mode == "CMIS" ):
                         RESULT = This.upload(mode)
@@ -344,7 +344,7 @@ class importAlf():
         
         def CommandTestHost():
             mode = "BULKIMPORTTOOL"
-            TestHost = This.OpenHost(mode)
+            TestHost = This.OpenHost(mode, False)
         
         def CommandConfGlobale():
             def SaveConf():
@@ -471,44 +471,25 @@ class importAlf():
         menubar.add_cascade(label="Général", menu=filemenu, font=menufont)
 
 
-        # Choix du package
-        # Bouton du package
-        #ButtonPackage = Button(FM, text='Choisir le package', command=CommandOpenPackage, font=buttonfont, relief=RAISED)
         # Conteneur du package
         PathDir = Label(fen, bg=BG, fg=FGHIDDEN, width=60, font=defaultfont)
 
         # Traitement des documents
         # Bouton du traitement
-        This.ButtonGenerate = Button(FM, text='Générer le package', command=CommandGenerate, font=buttonfont, relief=RAISED)
+        This.ButtonGenerate = Button(FM, text='Générer le package', command=CommandGenerate, font=buttonfont, relief=GROOVE)
         This.ButtonGenerate.config(state=DISABLED)
 
-        # Choix du host
-        # Menu de choix du host
-        #HostSelec = Tix.StringVar()  
-        #This.Host = Tix.ComboBox(FM, editable=0, dropdown=1, bg="white", state=DISABLED, variable=HostSelec)
-        
-        #listhosts = This.conf['hosts'].split(",")
-        #count=0
-        #for host in listhosts:
-        #    This.Host.insert(count, host)
-        #    count=count+1
-
-        #This.Host.slistbox.listbox.bind('<ButtonRelease-1>', CommandOpenHost)
-        
         # Import dans Alfresco
         # Bouton d'upload
-        This.ButtonUpload = Button(FM, text='Importer (mode Bulk Import)', command=CommandUpload, font=buttonfont, relief=RAISED)
+        This.ButtonUpload = Button(FM, text='Importer (mode Bulk Import)', command=CommandUpload, font=buttonfont, relief=GROOVE)
         This.ButtonUpload.config(state=DISABLED)
         
-        This.ButtonTestHost = Button(FM, text='Test connexions', command=CommandTestHost, font=buttonfont, relief=RAISED)
+        This.ButtonTestHost = Button(FM, text='Test connexions', command=CommandTestHost, font=buttonfont, relief=GROOVE)
         This.ButtonTestHost.config(state=DISABLED)
         
         This.var1 = IntVar()
         This.Force = Checkbutton(FM2, text = "Mise à jour uniquement (CMIS)", highlightthickness="0", font="forcefont", variable = This.var1 , command=ChangeMode)
         This.Force.config(state=DISABLED)
-        
-        #var2 = IntVar()
-        #This.Mode = Checkbutton(FM2, text = "Mode Bulk Import Tool", highlightthickness="0", font="forcefont", variable = var2)
 
         # Affichage du guide
         This.Guide = Text(FM3, bg="ivory", fg="#222", width=110, height=1.4, font=guidefont)
@@ -523,8 +504,6 @@ class importAlf():
         #"Clear = Button(FM2, text="Nettoyer les logs", command=CommandClearLog, font=buttonfont, relief=RAISED)
 
         # Placements
-        #This.Host.pack(side=LEFT, anchor=W,fill=X, expand=YES)
-        #ButtonPackage.pack(side=LEFT, anchor=W, fill=X, expand=YES)
         This.ButtonGenerate.pack(side=LEFT, anchor=W, fill=X, expand=YES)
         This.ButtonTestHost.pack(side=LEFT, anchor=W, fill=X, expand=YES)
         This.ButtonUpload.pack(side=LEFT, anchor=W, fill=X, expand=YES)
@@ -559,7 +538,6 @@ class importAlf():
             repo = client.defaultRepository
 
             Folder = repo.getObjectByPath(path)
-            
             return [True,path + "' : OK", "Success"]
         except Exception, e:
             return [False,path + "' : Introuvable", ""]
@@ -585,32 +563,32 @@ class importAlf():
         try:
             rh = RESTHelper()
             rh.login(This.conf['user'], This.conf['password'], This.conf['host'], 8080)
+            data = rh.statusbulkimport()
+            print json.load(data)
             return True
         except Exception, e:
             This.logger(str(e),"Error")
             return False
     
-    def OpenHost(This, mode):
+    def OpenHost(This, mode, silence):
         This.Logger.delete('1.0', END)
         if ( This.conf['host'] != "" ):
             This.conf['url'] = This.conf['urltemp'].replace("__HOST__", This.conf['host'])
-            LOG = "Test connexion Bulk Import Tool ("+This.conf['host']+")"
-            testbulkimport = This.testBulkImport()
             
+            testbulkimport = This.testBulkImport()
+
             if ( testbulkimport ):
-                This.logger("Test connexion Bulk Import Tool : OK","Success")
+                This.logger("Test connexion Bulk Import Tool : OK","Success",silence)
             else:
-                This.logger("Test connexion Bulk Import Tool : Error","Error")
+                This.logger("Test connexion Bulk Import Tool : Error","Error",silence)
                 return False
             
             if (os.path.exists(This.conf['dir'] + "Conf/package.conf")):
-                
-                LOG = "Test connexion CMIS Alfresco ("+This.conf['host']+")"
                 testhost = This.testCMIS()
                 
                 if (testhost != False ):
-                    This.logger(LOG+" : OK","Success")
-                    This.logger("\nTest des destinations du CSV :\n","")
+                    This.logger("Test connexion CMIS Alfresco ("+This.conf['host']+") : OK","Success",silence)
+                    This.logger("\nTest des destinations du CSV :\n","",silence)
 
                     pathlist = {}
                     WKTEST = True
@@ -621,7 +599,7 @@ class importAlf():
                         if ( path not in pathlist ):
                             pathlist[path] = True
                             test = This.testWkspace(path)
-                            This.logger(test[1], test[2])
+                            This.logger(test[1], test[2],silence)
                             if ( test[0] == False ):
                                 WKTEST = False
                 else:
@@ -630,18 +608,17 @@ class importAlf():
                 if ( WKTEST == True ):
                     if ( mode == "BULKIMPORTTOOL" ):
                         This.ButtonUpload['state'] = "active"
-                        This.Force['state'] = "disabled"
+                        This.Force['state'] = "active"
                     else:
                         This.ButtonUpload['state'] = "active"
                         This.var1.set(1)
-                        This.Force['state'] = "disabled"
-                    This.UpdateGuide("Etape 4 : Importez dans Alfresco")
+                        This.Force['state'] = "active"
                     return True
                 else:
                     This.Force['state'] = "disabled"
                     This.var1.set(0)
-                    This.logger("\nTest des destinations : dossiers manquants (sans conséquences en mode Bulk Import Tool)","")
-                    This.logger("\nPour le mode CMIS (mise à jour), le mode Bulk Import Tool doit être lancé en premier)","")
+                    This.logger("\nTest des destinations : dossiers manquants (sans conséquences en mode Bulk Import Tool)","",silence)
+                    This.logger("\nPour le mode CMIS (mise à jour), le mode Bulk Import Tool doit être lancé en premier)","",silence)
                     This.ButtonUpload['text'] = "Importer (mode Bulk Import)"
                     if ( mode == "BULKIMPORTTOOL" ):
                         return True

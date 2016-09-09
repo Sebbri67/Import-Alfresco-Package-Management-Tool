@@ -231,19 +231,13 @@ class RESTHelper(object):
         return False
     
     @restfuldoc
-    def loginbulkimport(self, username, password, host="127.0.0.1", port="8080"):
+    def statusbulkimport(self):
+        method, url = parseComm(STATUSBULKIMPORT[1])
+        res = self.request(method, url, simpleget=1)
 
-        self.host = host
-        self.port = port
-        jsonDict = dict(username=username, password=password)
-        method, url = parseComm(LOGINBULKIMPORT[1])
-        res = self.request(method, url, json=repr(jsonDict))
         if res is not None:
-            data = res.read()
-            json = pythonizeJson(data)
-            self.ticket = json["data"]["ticket"]
             logger.info("Alfresco Bulk Import Tool login.")
-            return True
+            return res
         return False
     
     @restfuldoc
@@ -550,7 +544,7 @@ class RESTHelper(object):
             return True
         return False
 
-    def request(self, method, url, body=None, headers=None, getPars={}, json=None, cmisaclxml=None, atomxml=None, params=None):
+    def request(self, method, url, body=None, headers=None, getPars={}, json=None, cmisaclxml=None, atomxml=None, params=None, simpleget=0):
 
         # auth ticket in url
         if self.ticket is not None:
@@ -575,7 +569,10 @@ class RESTHelper(object):
         http_conn = httplib.HTTPConnection(self.host, self.port, timeout=60)
 
         if method in ("GET", "DELETE"):
-            http_conn.request(method, formatComm(url, getPars))
+            if ( simpleget == 0 ):
+                http_conn.request(method, formatComm(url, getPars))
+            else:
+                http_conn.request(method, url)
 
         elif method in ("POST", "PUT"):
             if headers is None:
