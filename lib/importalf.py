@@ -23,10 +23,12 @@ import sys
 import shutil
 import tkFileDialog
 import tkFont
+import tkMessageBox
 import ttk
 import uuid
 import json
 import time
+from functools import partial
 
 import paramiko
 from contextlib import closing
@@ -39,6 +41,7 @@ class importAlf():
     def __init__(self):
         self.version = "1.0.1"
         self.conf = {}
+        
         self.confpack = {}
         self.fileinfo = {}
         self.Logger = {}
@@ -47,6 +50,7 @@ class importAlf():
 	fpath = path.remove("lib")
         self.dir_path = "/".join(path)
         self.conf = self.get_conf()
+        self.conf['open'] = ""
 
     # Get Global Config
     def get_conf(This):
@@ -57,10 +61,6 @@ class importAlf():
         config.readfp(file)
         
         file.close()
-        
-        #This.Logger.delete('1.0', END)
-        
-        #LOG = "ATTENTION : la configuration globale est incomplète : "
         
         conf = {}
         try:
@@ -165,16 +165,48 @@ class importAlf():
     # Gui Composer
     
     # Taille et position de la fenêtre
-    def posfen(This,fen, FENW, FENH):
+    def posfen(This,fen, FENW=0, FENH=0):
         RESX = fen.winfo_screenwidth()
         if ( RESX > 1920 ):
             RESX = 1920
         RESY = fen.winfo_screenheight()
-         
+        
+        if ( FENW == 0 ):
+            fen.after(500,fen.update_idletasks())
+            FENW = fen.winfo_reqwidth()
+            FENH = fen.winfo_reqheight()
+        
         POSX = (RESX - FENW) /2
         POSY = (RESY - FENH) /2
-        
+
         fen.geometry(str(FENW)+"x"+str(FENH)+"+"+str(POSX)+"+"+str(POSY))
+        fen.deiconify()
+    
+    def askYesNo(This, title, message, parent):
+        return tkMessageBox.askquestion(title,message,parent=parent)
+    
+    def messageShow(This, title, message, parent):
+        return tkMessageBox.showwarning(title,message,parent=parent)
+    
+    def get_fieldsCSV(This):
+        csvfile = open(This.conf['dir'] + 'Conf/list.csv', "rb")
+        reader = csv.reader(csvfile, delimiter=';', quotechar='"')
+
+        fields = {}
+
+        for rows in reader:
+            i=0
+            for row in rows:
+                fields[i] = unicode(row,"iso8859_1")
+                i=i+1
+            break
+            
+        csvfile.close()
+        
+        return fields
+    
+    def getIndex(self,value,dicto):
+        return dicto.keys()[dicto.values().index(value)] 
     
     def gen_dialog(This):
         def CommandClearLog():
@@ -200,13 +232,16 @@ class importAlf():
                     This.logger("Génération des documents réussie","Success")
                     This.UpdateGuide("Etape 3 : Importez les documents")    
 
-        def CommandOpenPackage():
+        def CommandOpenPackage(path=""):
             This.Logger.delete('1.0', END)
             
-            # Dialog Box for choose dir package
-            PackageDir = tkFileDialog.askdirectory(initialdir="/home/sb/Documents/DSI/GED/", title="Choisir le répertoire")
-            PathDir['text'] = PackageDir
-            This.conf['dir'] = PathDir['text'] + "/"
+            if ( path == "" ):
+                # Dialog Box for choose dir package
+                PackageDir = tkFileDialog.askdirectory(initialdir=This.dir_path, title="Choisir le répertoire")
+                PathDir['text'] = PackageDir
+                This.conf['dir'] = PathDir['text'] + "/"
+            else:
+                This.conf['dir'] = path
 
             check_package_conf = False
             check_aspects_conf = False
@@ -222,23 +257,14 @@ class importAlf():
 
                 This.logger("Nombre de documents : "+str(len(This.fileinfo)),"")
 
-                csvfile = open(This.conf['dir'] + 'Conf/list.csv', "rb")
-                reader = csv.reader(csvfile, delimiter=';', quotechar='"')
+                fields = This.get_fieldsCSV()
 
-                fields = {}
-
-                for row in reader:
-                    fields = row
-                    break
-
-                csvfile.close()
-
-                name = unicode(fields[This.confpack['name']], "iso8859_1")
-                newname = unicode(fields[This.confpack['newname']], "iso8859_1")
-                title = unicode(fields[This.confpack['title']], "iso8859_1")
-                description = unicode(fields[This.confpack['desc']], "iso8859_1")
-                tags = unicode(fields[This.confpack['tags']], "iso8859_1")
-                path = unicode(fields[This.confpack['path']], "iso8859_1")
+                name = fields[This.confpack['name']]
+                newname = fields[This.confpack['newname']]
+                title = fields[This.confpack['title']]
+                description = fields[This.confpack['desc']]
+                tags = fields[This.confpack['tags']]
+                path = fields[This.confpack['path']]
 
                 This.logger("\nVérification correspondance des champs :\n","")
                 This.logger("  Attributs   | Champs CSV","")
@@ -282,7 +308,7 @@ class importAlf():
                     if ( type == "STA" ):
                         valuedetail = " : Valeur statique '"+unicode(field, "iso8859_1")+"'"
                     else:
-                        valuedetail = " : Valeur dynamique du champs CSV '"+unicode(fields[int(field)], "iso8859_1")+"'"
+                        valuedetail = " : Valeur dynamique du champs CSV '"+fields[int(field)]+"'"
 
                     This.logger("--> : "+name+valuedetail,"")
                     check_properties_conf = True
@@ -302,11 +328,11 @@ class importAlf():
                 This.ButtonGenerate['state'] = "active"
                 This.ButtonTestHost['state'] = "active"
                 This.UpdateGuide("Etape 2 : Générez le package")
+                This.conf['open'] = This.confpack['PKGID']
             else:
                 This.logger("\n"+This.conf['dir'] + " : Erreur.", "Error")
                 This.ButtonGenerate['state'] = "disabled"
                 This.ButtonTestHost['state'] = "disabled"
-                This.Host['state'] = "disabled"
                 This.ButtonUpload['state'] = "disabled"
 
         def CommandUpload():
@@ -359,14 +385,8 @@ class importAlf():
                 This.conf = This.get_conf()
                 This.conf['dir'] = PathDir['text'] + "/"
                 fenconf.destroy()
-                #clearHosts()
-                #listhosts = This.conf['hosts'].split(",")
-                #count=0
-                #for host in listhosts:
-                #    This.Host.insert(count, host)
-                #    count=count+1
 
-            fenconf = Tix.Tk()
+            fenconf = Toplevel(fen)
             fenconf.title('Import Alfresco - Configuration générale')
             
                 
@@ -425,8 +445,448 @@ class importAlf():
             CredSSH.grid(sticky="W",row=8, column=1,padx=3,pady=1)
             Save.grid(sticky="W",row=9, column=0,padx=3,pady=1)
             Quit.grid(sticky="E",row=9, column=1,padx=3,pady=1)
-            This.posfen(fenconf,750,300)
+            
+            fenconf.withdraw()
+            This.posfen(fenconf)
             return
+        
+        def gen_listFields(box):
+            fields = This.get_fieldsCSV()
+            for field in fields:
+                box.insert(field,fields[field])
+            return
+        
+        def CommandCreatePackage():
+            def PkgPlace():
+                Place = tkFileDialog.askdirectory(parent=fenconf,title="Choisir le CSV", initialdir=This.dir_path) 
+                try:
+                    This.conf['dir'] = Place+"/"
+                    if (os.path.exists(This.conf['dir'] + "Conf") == False):
+                        os.mkdir(This.conf['dir']+"Conf")
+                    if (os.path.exists(This.conf['dir'] + "Orig") == False):
+                        os.mkdir(This.conf['dir']+"Orig")
+                    This.get_packageid()
+                    This.ButtonPkgPlace['state'] = "disabled"
+                    This.ButtonImportCSV['state'] = "active"
+                    
+                    return True
+                except Exception, e:
+                    This.logger(str(e),"Error")
+                    return False
+            
+            def ImportCSV():
+                try:
+                    if (os.path.exists(This.conf['dir'] + "Conf/list.csv") == True):
+                        rep = This.askYesNo("Attention","Le package en cours de création/modification contient déjà un fichier list.csv.\nConfirmez vous le nouvel import ?",fenconf)
+                        if ( rep == "yes" ):
+                            importcsv = True
+                        else:
+                            importcsv = False
+                    else:
+                        importcsv = True
+
+                    if ( importcsv == True ):
+                        CSV = tkFileDialog.askopenfilename(parent=fenconf,title="Choisir le CSV", initialdir=This.dir_path, \
+                            initialfile="", filetypes = [("Fichiers CSV","*.csv")]) 
+                        shutil.copy2(CSV,This.conf['dir'] + "Conf/list.csv")
+                        
+                    This.ButtonImportCSV['state'] = "disabled"
+                    This.ButtonConfig['state'] = "active"
+                    This.ButtonAspects['state'] = "active"
+                    This.ButtonProperties['state'] = "active"
+                    This.ButtonImportFiles['state'] = "active"
+                    This.logger("Le fichier CSV a été importé.","Success")
+                    return True
+                except Exception, e:
+                    return False
+
+            def ImportFiles():
+                This.confpack = This.get_confpack()
+                Place = tkFileDialog.askdirectory(parent=fenconf,title="Choisir le dossier contenant les documents", initialdir=This.dir_path)
+                try:
+                    sourceDir = Place+"/"
+                    fileinfo = This.parse_csv()
+                    for line in fileinfo:
+                        if ( os.path.exists(sourceDir + fileinfo[line]['name']) == True):
+                            shutil.copy2(sourceDir + fileinfo[line]['name'],This.conf['dir'] + "Orig/" + fileinfo[line]['name'])
+                        else:
+                            This.logger("Document du CSV manquant dans le répertoire","Error")
+                            return False
+                    This.ButtonPkgPlace['state'] = "disabled"
+                    This.logger("Les documents ont été importés.","Success")
+                    return True
+                except Exception, e:
+                    This.logger(str(e),"Error")
+                    return False
+            
+            def Config():
+                def saveConfPkg():
+                    complete = True
+                    if ( var['OLDNAME'].get() == "" ):
+                        complete = False
+                    if ( var['NEWNAME'].get() == "" ):
+                        complete = False
+                    if ( var['TITLE'].get() == "" ):
+                        complete = False
+                    if ( var['DESC'].get() == "" ):
+                        complete = False
+                    if ( var['TAGS'].get() == "" ):
+                        complete = False
+                    if ( var['DESTPATH'].get() == "" ):
+                        complete = False
+                    
+                    if ( complete == True ):
+                        fields = This.get_fieldsCSV()
+                        try:
+                            file = open(This.conf['dir']+"Conf/package.conf", "wb")
+                            file.write("[PACKAGE]\n")
+                            file.write("OLDNAME="+str(This.getIndex(var['OLDNAME'].get(),fields))+"\n")
+                            file.write("NEWNAME="+str(This.getIndex(var['NEWNAME'].get(),fields))+"\n")
+                            file.write("TITLE="+str(This.getIndex(var['TITLE'].get(),fields))+"\n")
+                            file.write("DESC="+str(This.getIndex(var['DESC'].get(),fields))+"\n")
+                            file.write("TAGS="+str(This.getIndex(var['TAGS'].get(),fields))+"\n")
+                            file.write("DESTPATH="+str(This.getIndex(var['DESTPATH'].get(),fields))+"\n")
+                            file.close()
+                        except Exception, e:
+                            This.logger(str(e),"Error")
+                        fenconfpkg.destroy()
+                        This.ButtonAspects['state'] = "active"
+                    else:
+                        This.messageShow("Attention","Vous devez renseigner tous les champs.", fenconfpkg)
+                    
+                def updateList(evt, name, key, values):
+                    value = name.entry.get()
+                    
+                    already = False
+                    for k in values:
+                        if ( k != name and value == values[k]):
+                            already=True
+                            
+                    if ( already == False ):
+                        values[key] = value
+                    else:
+                        This.messageShow("Attention","Champ déjà utilisé !!", fenconfpkg)
+                        var[key].set("")
+                    
+                fenconfpkg = Toplevel(fenconf)
+                fenconfpkg.title("Configutation (package.conf)")
+
+                LabelKeys = Label(fenconfpkg, anchor=W, text="Clefs", width=20, font=titlefont)
+                LabelFields = Label(fenconfpkg, anchor=W, text="Champs (CSV)", width=20, font=titlefont)
+
+                LabelKeys.grid(row=0, column=0,padx=3,pady=1)
+                LabelFields.grid(row=0, column=1,padx=3,pady=1)
+
+                LabelOLDNAME = Label(fenconfpkg, anchor=W, text="Fichier PDF", width=20, font=defaultfont)
+                LabelNEWNAME = Label(fenconfpkg, anchor=W, text="Nom d'import", width=20, font=defaultfont)
+                LabelTITLE = Label(fenconfpkg, anchor=W, text="Titre", width=20, font=defaultfont)
+                LabelDESC = Label(fenconfpkg, anchor=W, text="Description", width=20, font=defaultfont)
+                LabelTAGS = Label(fenconfpkg, anchor=W, text="TAGS", width=20, font=defaultfont)
+                LabelDESTPATH = Label(fenconfpkg, anchor=W, text="Destination", width=20, font=defaultfont)
+                
+                var = {}
+                values={}
+                
+                var['OLDNAME'] = Tix.StringVar()  
+                listOLDNAME = Tix.ComboBox(fenconfpkg, editable=1, dropdown=1, variable=var['OLDNAME'])
+                gen_listFields(listOLDNAME)
+                listOLDNAME.slistbox.listbox.bind('<ButtonRelease-1>', partial(updateList,name=listOLDNAME,key="OLDNAME",values=values))
+
+                var['NEWNAME'] = Tix.StringVar()  
+                listNEWNAME = Tix.ComboBox(fenconfpkg, editable=1, dropdown=1, variable=var['NEWNAME'])
+                gen_listFields(listNEWNAME)
+                listNEWNAME.slistbox.listbox.bind('<ButtonRelease-1>', partial(updateList,name=listNEWNAME,key="NEWNAME",values=values))
+
+                var['TITLE'] = Tix.StringVar()  
+                listTITLE = Tix.ComboBox(fenconfpkg, editable=1, dropdown=1, variable=var['TITLE'])
+                gen_listFields(listTITLE)
+                listTITLE.slistbox.listbox.bind('<ButtonRelease-1>', partial(updateList,name=listTITLE,key="TITLE",values=values))
+
+                var['DESC'] = Tix.StringVar()  
+                listDESC = Tix.ComboBox(fenconfpkg, editable=1, dropdown=1, variable=var['DESC'])
+                gen_listFields(listDESC)
+                listDESC.slistbox.listbox.bind('<ButtonRelease-1>', partial(updateList,name=listDESC,key="DESC",values=values))
+
+                var['TAGS'] = Tix.StringVar()  
+                listTAGS = Tix.ComboBox(fenconfpkg, editable=1, dropdown=1, variable=var['TAGS'])
+                gen_listFields(listTAGS)
+                listTAGS.slistbox.listbox.bind('<ButtonRelease-1>', partial(updateList,name=listTAGS,key="TAGS",values=values))
+
+                var['DESTPATH'] = Tix.StringVar()  
+                listDESTPATH = Tix.ComboBox(fenconfpkg, editable=1, dropdown=1, variable=var['DESTPATH'])
+                gen_listFields(listDESTPATH)
+                listDESTPATH.slistbox.listbox.bind('<ButtonRelease-1>', partial(updateList,name=listDESTPATH,key="DESTPATH",values=values))
+                
+                if (os.path.exists(This.conf['dir'] + "Conf/package.conf") == True):
+                    confpacktmp = This.get_confpack()
+                    fields = This.get_fieldsCSV()
+                    var['OLDNAME'].set(fields[confpacktmp['name']])
+                    var['NEWNAME'].set(fields[confpacktmp['newname']])
+                    var['TITLE'].set(fields[confpacktmp['title']])
+                    var['DESC'].set(fields[confpacktmp['desc']])
+                    var['TAGS'].set(fields[confpacktmp['tags']])
+                    var['DESTPATH'].set(fields[confpacktmp['path']])
+
+                LabelKeys.grid(row=0, column=0,padx=3,pady=1)
+                LabelFields.grid(row=0, column=1,padx=3,pady=1)
+
+                LabelOLDNAME.grid(row=1, column=0,padx=3,pady=1)
+                LabelNEWNAME.grid(row=2, column=0,padx=3,pady=1)
+                LabelTITLE.grid(row=3, column=0,padx=3,pady=1)
+                LabelDESC.grid(row=4, column=0,padx=3,pady=1)
+                LabelTAGS.grid(row=5, column=0,padx=3,pady=1)
+                LabelDESTPATH.grid(row=6, column=0,padx=3,pady=1)
+
+                listOLDNAME.grid(row=1, column=1,padx=3,pady=1)
+                listNEWNAME.grid(row=2, column=1,padx=3,pady=1)
+                listTITLE.grid(row=3, column=1,padx=3,pady=1)
+                listDESC.grid(row=4, column=1,padx=3,pady=1)
+                listTAGS.grid(row=5, column=1,padx=3,pady=1)
+                listDESTPATH.grid(row=6, column=1,padx=3,pady=1)
+
+                Quit = Button(fenconfpkg, text="Quitter", command=fenconfpkg.destroy, relief=RAISED, font=buttonfont)
+                Save = Button(fenconfpkg, text="Sauver", command=saveConfPkg, relief=RAISED, font=buttonfont)
+
+                Save.grid(sticky="W",row=7, column=0,padx=3,pady=1)
+                Quit.grid(sticky="E",row=7, column=1,padx=3,pady=1)
+
+                fenconfpkg.withdraw()
+                This.posfen(fenconfpkg)
+                return
+            
+            def ConfigAspects():
+                def saveAspects():
+                    listaspects = Aspects.get('1.0', 'end')
+                    tabaspects = listaspects.split("\n")
+                    try:
+                        file = open(This.conf['dir']+"Conf/aspects.conf", "wb")
+                        for aspect in tabaspects:
+                            if ( aspect != "" ):
+                                file.write(aspect+"\n")
+                        file.close()
+                        fenconfasp.destroy()
+                        This.ButtonProperties['state'] = "active"
+                    except Exception, e:
+                        This.logger(str(e),"Error")
+                    return
+                
+                fenconfasp = Toplevel(fenconf)
+                fenconfasp.title("Configutation des aspects")
+                
+                Aspects = Text(fenconfasp,bg="white",width=30,height=10)
+                
+                if (os.path.exists(This.conf['dir'] + "Conf/aspects.conf") == True):
+                    file = open(This.conf['dir'] + "Conf/aspects.conf", "r")
+                    line = 1
+                    for aspect in file.readlines():
+                        if ( aspect != "\n" ):
+                            Aspects.insert(str(line)+".0",aspect)
+                            line=line+1
+                    file.close()
+                
+                Aspects.grid(sticky="W",row=0, columnspan=2,padx=3,pady=1)
+
+                Quit = Button(fenconfasp, text="Quitter", command=fenconfasp.destroy, relief=RAISED, font=buttonfont)
+                Save = Button(fenconfasp, text="Sauver", command=saveAspects, relief=RAISED, font=buttonfont)
+
+                Save.grid(sticky="W",row=1, column=0,padx=3,pady=1)
+                Quit.grid(sticky="E",row=1, column=1,padx=3,pady=1)
+
+                fenconfasp.withdraw()
+                This.posfen(fenconfasp)
+                return
+            
+            def ConfigProperties():
+                def updateList(evt, name, key, word):
+                    choice = name.entry.get()
+                    props[key][word] = choice
+                    
+                def addSta():
+                    add("STA")
+                    
+                def addDyn():
+                    add("DYN")
+                 
+                def add(type):
+                    idx = len(props) + 1
+                    props[idx] = {}
+                    props[idx]['type'] = type
+                    props[idx]['name'] = Entry(Block,bg="white",width=15)
+                    
+                    props[idx]['format'] = ""
+                    props[idx]['formattix'] = Tix.StringVar()  
+                    props[idx]['formatlist'] = Tix.ComboBox(Block, editable=1, dropdown=1, variable=props[idx]['formattix'], width=20, listwidth=15)
+                    props[idx]['formatlist'].insert(0,"TXT")
+                    props[idx]['formatlist'].insert(1,"NUM")
+                    props[idx]['formatlist'].insert(2,"DATE")
+                    props[idx]['formatlist'].entry.config(width=8, state='readonly')
+                    props[idx]['formatlist'].slistbox.listbox.bind('<ButtonRelease-1>',partial(updateList,name=props[idx]['formatlist'],key=idx,word="format"))
+                    
+                    if ( type == "STA" ):
+                        props[idx]['value'] = Entry(Block,bg="white",width=15)
+                    else:
+                        props[idx]['value'] = ""
+                        props[idx]['valuetix'] = Tix.StringVar()
+                        props[idx]['valuelist'] = Tix.ComboBox(Block, editable=1, dropdown=1, variable=props[idx]['valuetix'], width=20, listwidth=50)
+                        gen_listFields(props[idx]['valuelist'])
+                        props[idx]['valuelist'].entry.config(width=15, state='readonly')
+                        props[idx]['valuelist'].slistbox.listbox.bind('<ButtonRelease-1>',partial(updateList,name=props[idx]['valuelist'],key=idx,word="value"))
+                    
+                    props[idx]['name'].grid(sticky="W",row=idx, column=0,padx=3,pady=1)
+                    props[idx]['formatlist'].grid(sticky="W",row=idx, column=1,padx=3,pady=1)
+                    if ( type == "STA" ):
+                        props[idx]['value'].grid(sticky="W",row=idx, column=2,padx=3,pady=1)
+                    else:
+                        props[idx]['valuelist'].grid(sticky="W",row=idx, column=2,padx=3,pady=1)
+                    Block.update_idletasks()
+                    return
+                            
+                def saveProperties():
+                    file = open(This.conf['dir']+"Conf/properties.csv", "wb")
+                    fields = This.get_fieldsCSV()
+                    for idx in props:
+                        name = props[idx]['name'].get()
+                        format = props[idx]['format']
+                        type = props[idx]['type']
+                        if ( type == "STA" ):
+                            value = props[idx]['value'].get().decode("utf-8").encode("iso8859_1")
+                        else:
+                            value = str(This.getIndex(props[idx]['value'],fields))
+                        file.write(name+";"+format+";"+type+";"+value+"\n")
+                    file.close()
+                    fenconfpro.destroy()
+                    This.ButtonImportFiles['state'] = "active"
+                    return
+                
+                props = {}
+                
+                fenconfpro = Toplevel(fenconf)
+                fenconfpro.title("Configuration des propriétés")
+                
+                AddSTA = Button(fenconfpro, command=addSta, text="Ajout prop. statique", relief=RAISED, font=buttonfont)
+                AddDYN = Button(fenconfpro, command=addDyn, text="Ajout prop. dynamique", relief=RAISED, font=buttonfont)
+                
+                AddSTA.grid(sticky="W",row=0, column=0,padx=3,pady=1)
+                AddDYN.grid(sticky="E",row=0, column=1,padx=3,pady=1)
+                
+                Block = Canvas(fenconfpro, width=400, height=100)
+
+                Block.grid(sticky="E",row=1, columnspan=2,padx=3,pady=1)
+                
+                if (os.path.exists(This.conf['dir'] + "Conf/properties.csv") == True):
+                    fields = This.get_fieldsCSV()
+                    file = open(This.conf['dir'] + "Conf/properties.csv", "r")
+                    idx = 1
+                    for prop in file.readlines():
+                        line = prop.split("\n")[0].split(";")
+                        if ( prop != "\n" ):
+                            props[idx] = {}
+                            props[idx]['type'] = line[2]
+                            props[idx]['name'] = Entry(Block,bg="white",width=15)
+                            props[idx]['name'].insert(0,line[0])
+                            
+                            props[idx]['formattix'] = Tix.StringVar()  
+                            props[idx]['formatlist'] = Tix.ComboBox(Block, editable=1, dropdown=1, variable=props[idx]['formattix'], width=20, listwidth=15)
+                            props[idx]['formatlist'].insert(0,"TXT")
+                            props[idx]['formatlist'].insert(1,"NUM")
+                            props[idx]['formatlist'].insert(2,"DATE")
+                            props[idx]['formatlist'].entry.config(width=8, state='readonly')
+                            props[idx]['formatlist'].slistbox.listbox.bind('<ButtonRelease-1>',partial(updateList,name=props[idx]['formatlist'],key=idx,word="format"))
+                            props[idx]['format'] = line[1]
+                            props[idx]['formattix'].set(line[1])
+                                                       
+                            props[idx]['name'].grid(sticky="W",row=idx, column=0,padx=3,pady=1)
+                            props[idx]['formatlist'].grid(sticky="W",row=idx, column=1,padx=3,pady=1)
+                            
+                            
+                            if ( props[idx]['type'] == "STA" ):
+                                props[idx]['value'] = Entry(Block,bg="white",width=15)
+                                props[idx]['value'].insert(0,unicode(line[3],"iso8859_1"))
+                                props[idx]['value'].grid(sticky="W",row=idx, column=2,padx=3,pady=1)
+                            else:
+                                props[idx]['valuetix'] = Tix.StringVar()
+                                props[idx]['valuelist'] = Tix.ComboBox(Block, editable=1, dropdown=1, variable=props[idx]['valuetix'], width=20, listwidth=50)
+                                gen_listFields(props[idx]['valuelist'])
+                                props[idx]['valuelist'].entry.config(width=15, state='readonly')
+                                props[idx]['valuelist'].slistbox.listbox.bind('<ButtonRelease-1>',partial(updateList,name=props[idx]['valuelist'],key=idx,word="value"))
+                                props[idx]['value'] = fields[int(line[3])]
+                                props[idx]['valuetix'].set(fields[int(line[3])])
+                                props[idx]['valuelist'].grid(sticky="W",row=idx, column=2,padx=3,pady=1)
+                            idx=idx+1
+                    file.close()
+                
+                Quit = Button(fenconfpro, text="Quitter", command=fenconfpro.destroy, relief=RAISED, font=buttonfont)
+                Save = Button(fenconfpro, text="Sauver", command=saveProperties, relief=RAISED, font=buttonfont)
+
+                Save.grid(sticky="W",row=20, column=0,padx=3,pady=1)
+                Quit.grid(sticky="E",row=20, column=1,padx=3,pady=1)
+
+                fenconfpro.withdraw()
+                This.posfen(fenconfpro)
+                return
+            
+            def loadPackage():
+                fenconf.destroy()
+                CommandOpenPackage(path=This.conf['dir'])
+                return
+            
+            fenconf = Toplevel(fen)
+       
+            fenconf.title("Import Alfresco - Création d'un package")
+            
+            defaultfont = tkFont.Font(fenconf, size=10, family='Verdana', weight='bold')
+            helpfont = tkFont.Font(fenconf, size=10, family='Verdana', slant='italic')
+            buttonfont = tkFont.Font(fenconf, size=10, family='Verdana', weight='bold')
+            
+            PathCSV = Label(fenconf, fg=FGHIDDEN, width=60, font=defaultfont)
+            Path = Label(fenconf, fg=FGHIDDEN, width=60, font=defaultfont)
+            
+            This.ButtonPkgPlace = Button(fenconf, text='Nouveau', command=PkgPlace, font=buttonfont, relief=GROOVE,width=30)
+            This.ButtonImportCSV = Button(fenconf, text='Importer le CSV', command=ImportCSV, font=buttonfont, relief=GROOVE,width=30)
+            This.ButtonImportCSV.config(state=DISABLED)
+            This.ButtonImportFiles = Button(fenconf, text='Importer les documents', command=ImportFiles, font=buttonfont, relief=GROOVE,width=30)
+            This.ButtonImportFiles.config(state=DISABLED)
+            This.ButtonConfig = Button(fenconf, text='Gestion package.conf', command=Config, font=buttonfont, relief=GROOVE,width=30)
+            This.ButtonConfig.config(state=DISABLED)
+            This.ButtonAspects = Button(fenconf, text='Gestion aspects.conf', command=ConfigAspects, font=buttonfont, relief=GROOVE,width=30)
+            This.ButtonAspects.config(state=DISABLED)
+            This.ButtonProperties = Button(fenconf, text='Gestion properties.csv', command=ConfigProperties, font=buttonfont, relief=GROOVE,width=30)
+            This.ButtonProperties.config(state=DISABLED)
+            This.ButtonLoad = Button(fenconf, text='Exploiter', command=loadPackage, font=buttonfont, relief=GROOVE,width=30)
+            This.ButtonLoad.config(state=DISABLED)
+            
+            if ( This.conf['open'] != "" ):
+                This.ButtonPkgPlace['state'] = "disabled"
+                This.ButtonConfig['state'] = "active"
+                This.ButtonAspects['state'] = "active"
+                This.ButtonProperties['state'] = "active"
+                This.ButtonLoad['state'] = "active"
+            
+            This.ButtonPkgPlace.pack(side=TOP, anchor=W, expand=NO)
+            This.ButtonImportCSV.pack(side=TOP, anchor=W, expand=NO)
+            This.ButtonConfig.pack(side=TOP, anchor=W, expand=NO)
+            This.ButtonAspects.pack(side=TOP, anchor=W, expand=NO)
+            This.ButtonProperties.pack(side=TOP, anchor=W, expand=NO)
+            This.ButtonImportFiles.pack(side=TOP, anchor=W, expand=NO)
+            This.ButtonLoad.pack(side=TOP, anchor=W, expand=NO)
+            
+            fenconf.withdraw()
+            This.posfen(fenconf)
+
+            return
+        
+        def CommandClosePackage():
+            This.conf['dir'] = ""
+            This.conf['open'] = ""
+            This.confpack = {}
+            This.Logger.delete('1.0', END)
+            This.ButtonGenerate['state'] = "disabled"
+            This.ButtonTestHost['state'] = "disabled"
+            This.ButtonUpload['state'] = "disabled"
+            This.Force['state'] = "disabled"
+            This.Bar['value'] = 0
+            This.UpdateGuide("Etape 1 : Choisissez le dossier contenant le package")
+            
         
         ### Fenêtre principale
         fen = Tix.Tk()
@@ -462,6 +922,8 @@ class importAlf():
         menubar = Menu(fen)
         package = Menu(menubar, tearoff=0)
         package.add_command(label="Ouvrir", command=CommandOpenPackage, font=submenufont)
+        package.add_command(label="Créer/Modifier", command=CommandCreatePackage, font=submenufont)
+        package.add_command(label="Fermer", command=CommandClosePackage, font=submenufont)
         menubar.add_cascade(label="Package", menu=package, font=menufont)
         filemenu = Menu(menubar, tearoff=0)
         filemenu.add_command(label="Configuration", command=CommandConfGlobale, font=submenufont)
@@ -524,7 +986,10 @@ class importAlf():
         fen.config(menu=menubar)
         
         # Taille et position de la fenêtre
-        This.posfen(fen, 1024, 620)
+        fen.resizable(width=False, height=False)
+        
+        This.posfen(fen, 1024, 660)
+        
         fen.mainloop()
 
         return
@@ -686,7 +1151,8 @@ class importAlf():
         file = open(This.conf['dir'] + "Conf/aspects.conf", "r")
         Aspects = []
         for aspect in file.readlines():
-            Aspects.append(aspect.rstrip())
+            if ( aspect != "\n"):
+                Aspects.append(aspect.rstrip())
         file.close()
         return Aspects
 
@@ -1000,7 +1466,8 @@ class importAlf():
             
             if ( createdir ):
                 dirempty=This.conf['dir']+"EMPTY"
-                os.mkdir(dirempty)
+                if (os.path.exists(dirempty) == False):
+                    os.mkdir(dirempty)
                 with closing(scpclient.WriteDir(client.get_transport(), This.conf['importdir']+"/"+This.confpack['PKGID'])) as scp:
                     scp.send_dir(dirempty, override_mode=True, preserve_times=True)
                 os.rmdir(dirempty)
