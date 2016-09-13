@@ -2,6 +2,7 @@
 # coding: utf-8
 # By Sébastien Brière - 2016
 # Importations de documents dans Alfresco
+# Sous licence GLP
 
 import ConfigParser
 import Tix
