@@ -22,7 +22,7 @@ Cependant, bien que [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-i
 
 En effet, la génération de ces fichiers XML ne peut pas être confiée aux services métiers.
 
-Dés le départ, j'ai souhaité que les services prépare l'importation en décrivant les documents et leurs métadonnées dans un tableau type Excel ou Open Office. Le fait qu'un utilisateur métier travaille avec un tableur est une solution plus "naturelle" et confortable.
+Dés le départ, j'ai souhaité que les services prépare l'importation en décrivant les documents et leurs métadonnées dans un tableau type Excel ou Open Office. Le fait qu'un utilisateur métier travaille dans un tableau structuré est une solution plus "naturelle" et confortable.
 
 Cette application s'appuie sur ce tableau pour générer un package d'importation compatible avec [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import).
 
