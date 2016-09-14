@@ -1,10 +1,8 @@
 # Import CMIS Alfresco - Bulk Import in Alfresco via CMIS
-Cette application simple permet d’effectuer des imports en masse de documents PDF dans un entrepôt Alfresco.
+Cette application simple permet d’effectuer la gestion des imports en masse de documents PDF dans un entrepôt Alfresco.
 Elle s'appuie sur CMIS et les API Rest d'Alfresco. Le package est compatible avec le projet [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import).
 
 Les documents PDF sont préparés sous la forme d'un package qui décrit les métadonnées qui les accompagneront.
-
-Import Alfresco permet en effet d'importer les PDF et de leur affecter des Aspects, des priopriétés ainsi que des tags éventuels.
 
 ## Origine de ce projet
 
@@ -18,17 +16,25 @@ A l'origine, je cherchais une solution d'import en masse de documents. Le cahier
 
 S'agissant de l'import de document, l'application était initialement prévue pour utiliser CMIS et REST. Toutefois, j'ai pris connaissance du projet [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import).
 
-[Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import) est une solution puissante et très performante d'import en masse dans Alfresco. Elle prend la forme d'un module AMP à déployer sur instance Alfresco.
+[Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import) est une solution puissante et très performante d'import en masse dans Alfresco. Elle prend la forme d'un module AMP à déployer sur l'instance Alfresco (WAR).
 
-Cependant, bien que [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import) propose l'importation avec métadonnées, la mise en oeuvre n'est pas simple dans la mesure ou les métadonnées de chaque document sont stockées dans un fichier XML l'accompagnant.
+Cependant, bien que [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import) propose l'importation avec métadonnées, la mise en oeuvre n'est pas simple dans la mesure ou les métadonnées de chaque document sont stockées dans un fichier XML.
 
 En effet, la génération de ces fichiers XML ne peut pas être confiée aux services métiers.
 
-Dés le départ, j'ai souhaité que les services prépare l'importation en décrivant les documents et leurs métadonnées dans un tableau type Excel ou Open Office.
+Dés le départ, j'ai souhaité que les services prépare l'importation en décrivant les documents et leurs métadonnées dans un tableau type Excel ou Open Office. Le fait qu'un utilisateur métier travaille avec un tableur est une solution plus "naturelle" et confortable.
 
 Cette application s'appuie sur ce tableau pour générer un package d'importation compatible avec [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import).
 
 Un mode CMIS est disponible permettant certaines opérations non proposées par [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import).
+
+## Que fait cette application ?
+
+- Elle préparer les packages d'importation
+- Elle génère les packages pour l'importation via [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import)
+- Elle transfert les package sur le serveur Alfresco dans un dossier défini
+- Elle déclenche l'importation via [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import) (via REST)
+- Elle récupère le statut de l'importation des packages (via REST)
 
 **Licence :**
 L'application est sous licence [LGPL v3.0](http://www.gnu.org/licenses/lgpl-3.0.html). 
