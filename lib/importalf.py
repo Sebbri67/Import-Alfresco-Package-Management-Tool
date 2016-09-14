@@ -233,109 +233,122 @@ class importAlf():
                     This.logger("Génération des documents réussie","Success")
                     This.UpdateGuide("Etape 3 : Importez les documents")    
 
-        def CommandOpenPackage(path=""):
+        def CommandOpenPackage(path="",silence=0):
             This.Logger.delete('1.0', END)
-            
-            if ( path == "" ):
-                # Dialog Box for choose dir package
-                PackageDir = tkFileDialog.askdirectory(initialdir=This.dir_path, title="Choisir le répertoire")
-                PathDir['text'] = PackageDir
-                This.conf['dir'] = PathDir['text'] + "/"
-            else:
-                This.conf['dir'] = path
+            try:
+                if ( path == "" ):
+                    # Dialog Box for choose dir package
+                    PackageDir = tkFileDialog.askdirectory(initialdir=This.dir_path, title="Choisir le répertoire")
+                    PathDir['text'] = PackageDir
+                    if ( PathDir['text'] == "" ):
+                        return
+                    This.conf['dir'] = PathDir['text'] + "/"
+                else:
+                    This.conf['dir'] = path
 
-            check_package_conf = False
-            check_aspects_conf = False
-            check_properties_conf = False
+                check_package_conf = False
+                check_aspects_conf = False
+                check_properties_conf = False
 
-            if (os.path.exists(This.conf['dir'] + "Conf/package.conf")):
-                This.confpack = This.get_confpack()
-            else:
-                This.logger("\nLe fichier package.conf est introuvable\n","Error")
-                
-            if (os.path.exists(This.conf['dir'] + "Conf/list.csv")):    
-                This.fileinfo = This.parse_csv()
+                if (os.path.exists(This.conf['dir'] + "Conf/package.conf")):
+                    This.confpack = This.get_confpack()
+                else:
+                    This.logger("\nLe fichier package.conf est introuvable\n","Error",silence)
 
-                This.logger("Nombre de documents : "+str(len(This.fileinfo)),"")
+                if (os.path.exists(This.conf['dir'] + "Conf/list.csv")):    
+                    This.fileinfo = This.parse_csv()
 
-                fields = This.get_fieldsCSV()
+                    This.logger("Nombre de documents : "+str(len(This.fileinfo)),"",silence)
 
-                name = fields[This.confpack['name']]
-                newname = fields[This.confpack['newname']]
-                title = fields[This.confpack['title']]
-                description = fields[This.confpack['desc']]
-                tags = fields[This.confpack['tags']]
-                path = fields[This.confpack['path']]
+                    fields = This.get_fieldsCSV()
 
-                This.logger("\nVérification correspondance des champs :\n","")
-                This.logger("  Attributs   | Champs CSV","")
-                This.logger("  ____________|___________    ","")
-                This.logger("  OLDNAME     | "+name,"")
-                This.logger("  NEWNAME     | "+newname,"")
-                This.logger("  TITLE       | "+title,"")
-                This.logger("  DESC        | "+description,"")
-                This.logger("  TAGS        | "+tags,"")
-                This.logger("  DESTPATH    | "+path,"")
+                    name = fields[This.confpack['name']]
+                    newname = fields[This.confpack['newname']]
+                    title = fields[This.confpack['title']]
+                    description = fields[This.confpack['desc']]
+                    tags = fields[This.confpack['tags']]
+                    path = fields[This.confpack['path']]
 
-                check_package_conf = True
-            else:
-                This.logger("\nLe fichier list.csv est introuvable\n","Error")
+                    This.logger("\nVérification correspondance des champs :\n","",silence)
+                    This.logger("  Attributs   | Champs CSV","",silence)
+                    This.logger("  ____________|___________    ","",silence)
+                    This.logger("  OLDNAME     | "+name,"",silence)
+                    This.logger("  NEWNAME     | "+newname,"",silence)
+                    This.logger("  TITLE       | "+title,"",silence)
+                    This.logger("  DESC        | "+description,"",silence)
+                    This.logger("  TAGS        | "+tags,"",silence)
+                    This.logger("  DESTPATH    | "+path,"",silence)
+                    
+                    check_package_conf = True
+                    
+                    for line in This.fileinfo:
+                        if ( os.path.exists(This.conf['dir'] + "Orig/" +This.fileinfo[line]['name']) == False):
+                            This.logger("\nDocument du CSV manquant dans le répertoire","Error",silence)
+                            check_package_conf = False
+                            break
+                else:
+                    This.logger("\nLe fichier list.csv est introuvable\n","Error",silence)
 
-            if (os.path.exists(This.conf['dir'] + "Conf/aspects.conf") and check_package_conf ):    
+                if (os.path.exists(This.conf['dir'] + "Conf/aspects.conf") and check_package_conf ):    
 
-                This.logger("\nListe des aspects :\n","")
+                    This.logger("\nListe des aspects :\n","",silence)
 
-                file = open(This.conf['dir'] + "Conf/aspects.conf", "r")
-                for aspect in file.readlines():
-                    This.logger("--> "+aspect.rstrip(),"")
-                file.close()
-                check_aspects_conf = True
-            else:
-                if ( check_package_conf ):
-                    This.logger("\nLe fichier aspects.conf est introuvable\n","Error")
+                    file = open(This.conf['dir'] + "Conf/aspects.conf", "r")
+                    for aspect in file.readlines():
+                        This.logger("--> "+aspect.rstrip(),"",silence)
+                    file.close()
+                    check_aspects_conf = True
+                else:
+                    if ( check_package_conf ):
+                        This.logger("\nLe fichier aspects.conf est introuvable\n","Error",silence)
 
-            if (os.path.exists(This.conf['dir'] + "Conf/properties.csv") and check_package_conf ):    
-                This.logger("\nListe des propriétés :\n","")
+                if (os.path.exists(This.conf['dir'] + "Conf/properties.csv") and check_package_conf ):    
+                    This.logger("\nListe des propriétés :\n","",silence)
 
-                csvfile = open(This.conf['dir'] + 'Conf/properties.csv', "rb")
-                reader = csv.reader(csvfile, delimiter=';', quotechar='"')
+                    csvfile = open(This.conf['dir'] + 'Conf/properties.csv', "rb")
+                    reader = csv.reader(csvfile, delimiter=';', quotechar='"')
 
-                for row in reader:
-                    name = row[0]
-                    format = row[1]
-                    type = row[2]
-                    field= row[3]
+                    for row in reader:
+                        name = row[0]
+                        format = row[1]
+                        type = row[2]
+                        field= row[3]
 
-                    if ( type == "STA" ):
-                        valuedetail = " : Valeur statique '"+unicode(field, "iso8859_1")+"'"
-                    else:
-                        valuedetail = " : Valeur dynamique du champs CSV '"+fields[int(field)]+"'"
+                        if ( type == "STA" ):
+                            valuedetail = " : Valeur statique '"+unicode(field, "iso8859_1")+"'"
+                        else:
+                            valuedetail = " : Valeur dynamique du champs CSV '"+fields[int(field)]+"'"
 
-                    This.logger("--> : "+name+valuedetail,"")
-                    check_properties_conf = True
-                csvfile.close()
-            else:
-                if ( check_package_conf ):
-                    This.logger("\nLe fichier properties.conf est introuvable\n","Error")       
+                        This.logger("--> : "+name+valuedetail,"",silence)
+                        check_properties_conf = True
+                    csvfile.close()
+                else:
+                    if ( check_package_conf ):
+                        This.logger("\nLe fichier properties.conf est introuvable\n","Error",silence)       
 
-            if ( check_package_conf and check_aspects_conf and check_properties_conf ):
-                PKGID = This.get_packageid()
-                
-                This.confpack['PKGID'] = PKGID
+                if ( check_package_conf and check_aspects_conf and check_properties_conf ):
+                    PKGID = This.get_packageid()
 
-                This.logger("\nPackage ID : "+This.confpack['PKGID'], "Success")
-                This.logger(This.conf['dir'] + " : OK.", "Success")
+                    This.confpack['PKGID'] = PKGID
 
-                This.ButtonGenerate['state'] = "active"
-                This.ButtonTestHost['state'] = "active"
-                This.UpdateGuide("Etape 2 : Générez le package")
-                This.conf['open'] = This.confpack['PKGID']
-            else:
-                This.logger("\n"+This.conf['dir'] + " : Erreur.", "Error")
-                This.ButtonGenerate['state'] = "disabled"
-                This.ButtonTestHost['state'] = "disabled"
-                This.ButtonUpload['state'] = "disabled"
+                    This.logger("\nPackage ID : "+This.confpack['PKGID'], "Success",silence)
+                    This.logger(This.conf['dir'] + " : OK.", "Success",silence)
 
+                    This.ButtonGenerate['state'] = "active"
+                    This.ButtonTestHost['state'] = "active"
+                    This.UpdateGuide("Etape 2 : Générez le package")
+                    This.conf['open'] = This.confpack['PKGID']
+                    return True
+                else:
+                    This.logger("\n"+This.conf['dir'] + " : Erreur.", "Error",silence)
+                    This.ButtonGenerate['state'] = "disabled"
+                    This.ButtonTestHost['state'] = "disabled"
+                    This.ButtonUpload['state'] = "disabled"
+                    return False
+            except Exception, e:
+                print str(e)
+                return False
+        
         def CommandUpload():
             mode = "BULKIMPORTTOOL"
             
@@ -460,15 +473,27 @@ class importAlf():
         def CommandCreatePackage():
             def PkgPlace():
                 Place = tkFileDialog.askdirectory(parent=fenconf,title="Choisir le CSV", initialdir=This.dir_path) 
+                if ( Place == () ):
+                    return
                 try:
-                    This.conf['dir'] = Place+"/"
+                    This.conf['dir'] = Place + "/"
+                    
                     if (os.path.exists(This.conf['dir'] + "Conf") == False):
                         os.mkdir(This.conf['dir']+"Conf")
                     if (os.path.exists(This.conf['dir'] + "Orig") == False):
                         os.mkdir(This.conf['dir']+"Orig")
                     This.get_packageid()
+                    
                     This.ButtonPkgPlace['state'] = "disabled"
-                    This.ButtonImportCSV['state'] = "active"
+                    if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
+                        This.ButtonImportCSV['state'] = "active"
+                        This.ButtonConfig['state'] = "active"
+                        This.ButtonAspects['state'] = "active"
+                        This.ButtonProperties['state'] = "active"
+                        This.ButtonImportFiles['state'] = "active"
+                        This.ButtonLoad['state'] = "active"
+                    else:
+                        This.ButtonImportCSV['state'] = "active"
                     
                     return True
                 except Exception, e:
@@ -490,12 +515,21 @@ class importAlf():
                         CSV = tkFileDialog.askopenfilename(parent=fenconf,title="Choisir le CSV", initialdir=This.dir_path, \
                             initialfile="", filetypes = [("Fichiers CSV","*.csv")]) 
                         shutil.copy2(CSV,This.conf['dir'] + "Conf/list.csv")
-                        
-                    This.ButtonImportCSV['state'] = "disabled"
-                    This.ButtonConfig['state'] = "active"
-                    This.ButtonAspects['state'] = "active"
-                    This.ButtonProperties['state'] = "active"
-                    This.ButtonImportFiles['state'] = "active"
+                    
+                    This.ButtonPkgPlace['state'] = "disabled"
+                    if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
+                        This.ButtonImportCSV['state'] = "active"
+                        This.ButtonConfig['state'] = "active"
+                        This.ButtonAspects['state'] = "active"
+                        This.ButtonProperties['state'] = "active"
+                        This.ButtonImportFiles['state'] = "active"
+                        This.ButtonLoad['state'] = "active"
+                    else:
+                        This.ButtonImportCSV['state'] = "active"
+                        This.ButtonConfig['state'] = "active"
+                        This.ButtonAspects['state'] = "active"
+                        This.ButtonProperties['state'] = "active"
+                        This.ButtonImportFiles['state'] = "active"
                     This.logger("Le fichier CSV a été importé.","Success")
                     return True
                 except Exception, e:
@@ -507,13 +541,36 @@ class importAlf():
                 try:
                     sourceDir = Place+"/"
                     fileinfo = This.parse_csv()
+                    
+                    This.Bar['maximum'] = len(This.fileinfo)
+                    val = 1
+                    pval = 0
+                    
                     for line in fileinfo:
                         if ( os.path.exists(sourceDir + fileinfo[line]['name']) == True):
                             shutil.copy2(sourceDir + fileinfo[line]['name'],This.conf['dir'] + "Orig/" + fileinfo[line]['name'])
+                            pval = pval + val
+                            This.Bar['value'] = pval
+                            This.Treatment.update()
                         else:
                             This.logger("Document du CSV manquant dans le répertoire","Error")
                             return False
                     This.ButtonPkgPlace['state'] = "disabled"
+                    if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
+                        This.ButtonImportCSV['state'] = "active"
+                        This.ButtonConfig['state'] = "active"
+                        This.ButtonAspects['state'] = "active"
+                        This.ButtonProperties['state'] = "active"
+                        This.ButtonImportFiles['state'] = "active"
+                        This.ButtonLoad['state'] = "active"
+                    else:
+                        This.ButtonImportCSV['state'] = "active"
+                        This.ButtonConfig['state'] = "active"
+                        This.ButtonAspects['state'] = "active"
+                        This.ButtonProperties['state'] = "active"
+                        This.ButtonImportFiles['state'] = "active"
+                    pval = pval + val
+                    This.Bar['value'] = pval
                     This.logger("Les documents ont été importés.","Success")
                     return True
                 except Exception, e:
@@ -551,7 +608,20 @@ class importAlf():
                         except Exception, e:
                             This.logger(str(e),"Error")
                         fenconfpkg.destroy()
-                        This.ButtonAspects['state'] = "active"
+                        This.ButtonPkgPlace['state'] = "disabled"
+                        if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
+                            This.ButtonImportCSV['state'] = "active"
+                            This.ButtonConfig['state'] = "active"
+                            This.ButtonAspects['state'] = "active"
+                            This.ButtonProperties['state'] = "active"
+                            This.ButtonImportFiles['state'] = "active"
+                            This.ButtonLoad['state'] = "active"
+                        else:
+                            This.ButtonImportCSV['state'] = "active"
+                            This.ButtonConfig['state'] = "active"
+                            This.ButtonAspects['state'] = "active"
+                            This.ButtonProperties['state'] = "active"
+                            This.ButtonImportFiles['state'] = "active"
                     else:
                         This.messageShow("Attention","Vous devez renseigner tous les champs.", fenconfpkg)
                     
@@ -666,7 +736,20 @@ class importAlf():
                                 file.write(aspect+"\n")
                         file.close()
                         fenconfasp.destroy()
-                        This.ButtonProperties['state'] = "active"
+                        This.ButtonPkgPlace['state'] = "disabled"
+                        if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
+                            This.ButtonImportCSV['state'] = "active"
+                            This.ButtonConfig['state'] = "active"
+                            This.ButtonAspects['state'] = "active"
+                            This.ButtonProperties['state'] = "active"
+                            This.ButtonImportFiles['state'] = "active"
+                            This.ButtonLoad['state'] = "active"
+                        else:
+                            This.ButtonImportCSV['state'] = "active"
+                            This.ButtonConfig['state'] = "active"
+                            This.ButtonAspects['state'] = "active"
+                            This.ButtonProperties['state'] = "active"
+                            This.ButtonImportFiles['state'] = "active"
                     except Exception, e:
                         This.logger(str(e),"Error")
                     return
@@ -756,7 +839,20 @@ class importAlf():
                         file.write(name+";"+format+";"+type+";"+value+"\n")
                     file.close()
                     fenconfpro.destroy()
-                    This.ButtonImportFiles['state'] = "active"
+                    This.ButtonPkgPlace['state'] = "disabled"
+                    if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
+                        This.ButtonImportCSV['state'] = "active"
+                        This.ButtonConfig['state'] = "active"
+                        This.ButtonAspects['state'] = "active"
+                        This.ButtonProperties['state'] = "active"
+                        This.ButtonImportFiles['state'] = "active"
+                        This.ButtonLoad['state'] = "active"
+                    else:
+                        This.ButtonImportCSV['state'] = "active"
+                        This.ButtonConfig['state'] = "active"
+                        This.ButtonAspects['state'] = "active"
+                        This.ButtonProperties['state'] = "active"
+                        This.ButtonImportFiles['state'] = "active"
                     return
                 
                 props = {}
