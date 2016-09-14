@@ -142,7 +142,7 @@ class importAlf():
     # Logger
     def logger(self, txt, tag, silence=False):
         if ( silence == False ):
-            self.Logger.insert("end"," █ " + txt + "\n",tag)
+            self.Logger.insert(END," █ " + txt + "\n",tag)
             self.Logger.see("end")
             self.Treatment.update()
 
@@ -974,7 +974,7 @@ class importAlf():
         guidefont = tkFont.Font(fen, size=11, family='Verdana', weight='bold')
         buttonfont = tkFont.Font(fen, size=10, family='Verdana', weight='bold')
         forcefont = tkFont.Font(fen, size=10, family='Verdana', weight='bold')
-
+        
         fen.title('Import Alfresco - Version '+self.version)
         fen.config(bg=BG, relief=GROOVE)
 
@@ -1007,14 +1007,17 @@ class importAlf():
         # Traitement des documents
         # Bouton du traitement
         self.ButtonGenerate = Button(FM, text='Générer le package', command=CommandGenerate, font=buttonfont, relief=GROOVE)
+        self.ButtonGenerate.config( height = 1, width = 15 )
         self.ButtonGenerate.config(state=DISABLED)
 
         # Import dans Alfresco
         # Bouton d'upload
         self.ButtonUpload = Button(FM, text='Importer (mode Bulk Import)', command=CommandUpload, font=buttonfont, relief=GROOVE)
+        self.ButtonUpload.config( height = 1, width = 15 )
         self.ButtonUpload.config(state=DISABLED)
         
         self.ButtonTestHost = Button(FM, text='Test connexions', command=CommandTestHost, font=buttonfont, relief=GROOVE)
+        self.ButtonTestHost.config( height = 1, width = 15 )
         self.ButtonTestHost.config(state=DISABLED)
         
         self.var1 = IntVar()
@@ -1644,7 +1647,8 @@ class importAlf():
                 result = self.getStatusBulkImport()
                 while ( self.returnStatus(result) ):
                     time.sleep(2)
-                    self.Logger.delete('8.0', END)
+                    self.Logger.delete('7.0', END)
+                    self.Logger.insert(END,"\n")
                     result = self.getStatusBulkImport()
              
                 return True
