@@ -54,143 +54,124 @@ class importAlf():
         self.conf['open'] = ""
 
     # Get Global Config
-    def get_conf(This):
+    def get_conf(self):
         config = ConfigParser.ConfigParser()
         
-        file = open(This.dir_path+"/importalf.conf", "rb")
+        file = open(self.dir_path+"/importalf.conf", "rb")
 
         config.readfp(file)
         
         file.close()
         
         conf = {}
+        LOG = "Paramètre introuvable : "
         try:
             conf['urltemp'] = config.get("GLOBAL", "url")
             if ( conf['urltemp'] == "" ):
-                This.logger(LOG+"urltemp","Error")
+                self.logger(LOG+"urltemp","Error")
         except:
-            This.logger(LOG+"urltemp","Error")
+            self.logger(LOG+"urltemp","Error")
             conf["urltemp"] = ""
         
         try:
             conf['user'] = config.get("GLOBAL", "user")
             if ( conf['user'] == "" ):
-                This.logger(LOG+"user","Error")
+                self.logger(LOG+"user","Error")
         except:
-            This.logger(LOG+"user","Error")
+            self.logger(LOG+"user","Error")
             conf["user"] = ""
         
         try:
             conf['password'] = config.get("GLOBAL", "password")
             if ( conf['password'] == "" ):
-                This.logger(LOG+"password","Error")
+                self.logger(LOG+"password","Error")
         except:
-            This.logger(LOG+"password","Error")
+            self.logger(LOG+"password","Error")
             conf["password"]
         
         try:
             conf['host'] = config.get("GLOBAL", "host")
             if ( conf['host'] == "" ):
-                This.logger(LOG+"host","Error")
+                self.logger(LOG+"host","Error")
         except:
-            This.logger(LOG+"host","Error")
+            self.logger(LOG+"host","Error")
             conf["host"] = ""
         
         try:
             conf['importdir'] = config.get("GLOBAL", "bulkimportdir")
             if ( conf['importdir'] == "" ):
-                This.logger(LOG+"importdir","Error")
+                self.logger(LOG+"importdir","Error")
         except:
-            This.logger(LOG+"importdir","Error")
+            self.logger(LOG+"importdir","Error")
             conf["importdir"] = ""
             
         try:
             conf['user_ssh'] = config.get("GLOBAL", "user_ssh")
             if ( conf['user_ssh'] == "" ):
-                This.logger(LOG+"user_ssh","Error")
+                self.logger(LOG+"user_ssh","Error")
         except:
-            This.logger(LOG+"user_ssh","Error")
+            self.logger(LOG+"user_ssh","Error")
             conf["user_ssh"] = ""
         
         try:
             conf['password_ssh'] = config.get("GLOBAL", "password_ssh")
             if ( conf['password_ssh'] == "" ):
-                This.logger(LOG+"password_ssh","Error")
+                self.logger(LOG+"password_ssh","Error")
         except:
-            This.logger(LOG+"password_ssh","Error")
+            self.logger(LOG+"password_ssh","Error")
             conf["password_ssh"] = "" 
             
         conf['port'] = "8080"    
         return conf
 
     # Get Package Config
-    def get_confpack(This):
+    def get_confpack(self):
         config = ConfigParser.ConfigParser()
-        file = open(This.conf['dir'] + "Conf/package.conf", "rb")
+        file = open(self.conf['dir'] + "Conf/package.conf", "rb")
         config.readfp(file)
 
-        This.confpack = {}
-        This.confpack['name'] = int(config.get("PACKAGE", "OLDNAME"))
-        This.confpack['newname'] = int(config.get("PACKAGE", "NEWNAME"))
-        This.confpack['title'] = int(config.get("PACKAGE", "TITLE"))
-        This.confpack['desc'] = int(config.get("PACKAGE", "DESC"))
-        This.confpack['tags'] = int(config.get("PACKAGE", "TAGS"))
-        This.confpack['path'] = int(config.get("PACKAGE", "DESTPATH"))
-        return This.confpack
+        self.confpack = {}
+        self.confpack['name'] = int(config.get("PACKAGE", "OLDNAME"))
+        self.confpack['newname'] = int(config.get("PACKAGE", "NEWNAME"))
+        self.confpack['title'] = int(config.get("PACKAGE", "TITLE"))
+        self.confpack['desc'] = int(config.get("PACKAGE", "DESC"))
+        self.confpack['tags'] = int(config.get("PACKAGE", "TAGS"))
+        self.confpack['path'] = int(config.get("PACKAGE", "DESTPATH"))
+        return self.confpack
 
     # Logger
-    def logger(This, txt, tag, silence=False):
+    def logger(self, txt, tag, silence=False):
         if ( silence == False ):
-            This.Logger.insert("end", txt + "\n",tag)
-            This.Logger.see("end")
-            This.Treatment.update()
+            self.Logger.insert("end"," █ " + txt + "\n",tag)
+            self.Logger.see("end")
+            self.Treatment.update()
 
     # Generate and get the packageId
-    def get_packageid(This):
-        if (os.path.exists(This.conf['dir'] + "Conf/packageId")):
-            file = open(This.conf['dir'] + "Conf/packageId", "rb")
+    def get_packageid(self):
+        if (os.path.exists(self.conf['dir'] + "Conf/packageId")):
+            file = open(self.conf['dir'] + "Conf/packageId", "rb")
             PKGID = file.read()
             file.close()
         else:
             PKGID = str(uuid.uuid4())
-            file = open(This.conf['dir'] + "Conf/packageId", "wb")
+            file = open(self.conf['dir'] + "Conf/packageId", "wb")
             file.write(PKGID)
             file.close()
 
         return PKGID
 
-    def UpdateGuide(This,txt):
-            This.Guide.delete('1.0', END)
-            This.Guide.insert("1.0", txt ,"tag-center")
+    def UpdateGuide(self,txt):
+            self.Guide.delete('1.0', END)
+            self.Guide.insert("1.0", txt ,"tag-center")
     
-    # Gui Composer
-    
-    # Taille et position de la fenêtre
-    def posfen(This,fen, FENW=0, FENH=0):
-        RESX = fen.winfo_screenwidth()
-        if ( RESX > 1920 ):
-            RESX = 1920
-        RESY = fen.winfo_screenheight()
-        
-        if ( FENW == 0 ):
-            fen.after(500,fen.update_idletasks())
-            FENW = fen.winfo_reqwidth()
-            FENH = fen.winfo_reqheight()
-        
-        POSX = (RESX - FENW) /2
-        POSY = (RESY - FENH) /2
-
-        fen.geometry(str(FENW)+"x"+str(FENH)+"+"+str(POSX)+"+"+str(POSY))
-        fen.deiconify()
-    
-    def askYesNo(This, title, message, parent):
+    def askYesNo(self, title, message, parent):
         return tkMessageBox.askquestion(title,message,parent=parent)
     
-    def messageShow(This, title, message, parent):
+    def messageShow(self, title, message, parent):
         return tkMessageBox.showwarning(title,message,parent=parent)
     
-    def get_fieldsCSV(This):
-        csvfile = open(This.conf['dir'] + 'Conf/list.csv', "rb")
+    def get_fieldsCSV(self):
+        csvfile = open(self.conf['dir'] + 'Conf/list.csv', "rb")
         reader = csv.reader(csvfile, delimiter=';', quotechar='"')
 
         fields = {}
@@ -207,105 +188,116 @@ class importAlf():
         return fields
     
     def getIndex(self,value,dicto):
-        return dicto.keys()[dicto.values().index(value)] 
-    
-    def gen_dialog(This):
+        return dicto.keys()[dicto.values().index(value)]
+     
+    def gen_dialog(self):
         def CommandClearLog():
-            This.Logger.delete('1.0', END)
+            self.Logger.delete('1.0', END)
         
         def CommandGenerate():
-            This.Logger.delete('1.0', END)
+            self.Logger.delete('1.0', END)
   
-            if (os.path.exists(This.conf['dir'] + "Conf/package.conf")):
-                if ( os.path.exists(This.conf['dir']+"/"+This.confpack['PKGID']) == False ):
-                    os.mkdir(This.conf['dir']+"/"+This.confpack['PKGID'])
+            if (os.path.exists(self.conf['dir'] + "Conf/package.conf")):
+                if ( os.path.exists(self.conf['dir']+"/"+self.confpack['PKGID']) == False ):
+                    os.mkdir(self.conf['dir']+"/"+self.confpack['PKGID'])
                 else:
-                    shutil.rmtree(This.conf['dir']+"/"+This.confpack['PKGID'])
-                    os.mkdir(This.conf['dir']+"/"+This.confpack['PKGID'])
+                    shutil.rmtree(self.conf['dir']+"/"+self.confpack['PKGID'])
+                    os.mkdir(self.conf['dir']+"/"+self.confpack['PKGID'])
                     
-                initfile=open(This.conf['dir'] + This.confpack['PKGID'] +"/Sites.metadata.properties.xml","wb")
+                initfile=open(self.conf['dir'] + self.confpack['PKGID'] +"/Sites.metadata.properties.xml","wb")
                 initfile.close()
-                RESULT = This.generatepack()
+                RESULT = self.generatepack()
                 if ( RESULT == True ):
-                    This.ButtonGenerate['state'] = "disabled"
-                    This.ButtonUpload['state'] = "active"
-                    This.Force['state'] = "active"
-                    This.logger("Génération des documents réussie","Success")
-                    This.UpdateGuide("Etape 3 : Importez les documents")    
+                    self.ButtonGenerate['state'] = "disabled"
+                    self.ButtonUpload['state'] = "active"
+                    self.Force['state'] = "active"
+                    self.logger("Génération des documents réussie","Success")
+                    self.UpdateGuide("Etape 3 : Importez les documents")    
 
         def CommandOpenPackage(path="",silence=0):
-            This.Logger.delete('1.0', END)
+            self.Logger.delete('1.0', END)
             try:
                 if ( path == "" ):
                     # Dialog Box for choose dir package
-                    PackageDir = tkFileDialog.askdirectory(initialdir=This.dir_path, title="Choisir le répertoire")
+                    PackageDir = tkFileDialog.askdirectory(initialdir=self.dir_path, title="Choisir le répertoire")
                     PathDir['text'] = PackageDir
                     if ( PathDir['text'] == "" ):
                         return
-                    This.conf['dir'] = PathDir['text'] + "/"
+                    self.conf['dir'] = PathDir['text'] + "/"
                 else:
-                    This.conf['dir'] = path
+                    self.conf['dir'] = path
 
                 check_package_conf = False
                 check_aspects_conf = False
                 check_properties_conf = False
 
-                if (os.path.exists(This.conf['dir'] + "Conf/package.conf")):
-                    This.confpack = This.get_confpack()
+                if (os.path.exists(self.conf['dir'] + "Conf/package.conf")):
+                    self.confpack = self.get_confpack()
                 else:
-                    This.logger("\nLe fichier package.conf est introuvable\n","Error",silence)
+                    self.logger("","",silence)
+                    self.logger("Le fichier package.conf est introuvable","Error",silence)
 
-                if (os.path.exists(This.conf['dir'] + "Conf/list.csv")):    
-                    This.fileinfo = This.parse_csv()
+                if (os.path.exists(self.conf['dir'] + "Conf/list.csv")):    
+                    self.fileinfo = self.parse_csv()
 
-                    This.logger("Nombre de documents : "+str(len(This.fileinfo)),"",silence)
+                    self.logger("Nombre de documents : "+str(len(self.fileinfo)),"",silence)
 
-                    fields = This.get_fieldsCSV()
+                    fields = self.get_fieldsCSV()
 
-                    name = fields[This.confpack['name']]
-                    newname = fields[This.confpack['newname']]
-                    title = fields[This.confpack['title']]
-                    description = fields[This.confpack['desc']]
-                    tags = fields[This.confpack['tags']]
-                    path = fields[This.confpack['path']]
+                    name = fields[self.confpack['name']]
+                    newname = fields[self.confpack['newname']]
+                    title = fields[self.confpack['title']]
+                    description = fields[self.confpack['desc']]
+                    tags = fields[self.confpack['tags']]
+                    path = fields[self.confpack['path']]
 
-                    This.logger("\nVérification correspondance des champs :\n","",silence)
-                    This.logger("  Attributs   | Champs CSV","",silence)
-                    This.logger("  ____________|___________    ","",silence)
-                    This.logger("  OLDNAME     | "+name,"",silence)
-                    This.logger("  NEWNAME     | "+newname,"",silence)
-                    This.logger("  TITLE       | "+title,"",silence)
-                    This.logger("  DESC        | "+description,"",silence)
-                    This.logger("  TAGS        | "+tags,"",silence)
-                    This.logger("  DESTPATH    | "+path,"",silence)
+                    self.logger("","",silence)
+                    self.logger("Vérification correspondance des champs :","",silence)
+                    self.logger("","",silence)
+                    self.logger("  Attributs   | Champs CSV","",silence)
+                    self.logger("  ____________|___________    ","",silence)
+                    self.logger("  OLDNAME     | "+name,"",silence)
+                    self.logger("  NEWNAME     | "+newname,"",silence)
+                    self.logger("  TITLE       | "+title,"",silence)
+                    self.logger("  DESC        | "+description,"",silence)
+                    self.logger("  TAGS        | "+tags,"",silence)
+                    self.logger("  DESTPATH    | "+path,"",silence)
                     
                     check_package_conf = True
                     
-                    for line in This.fileinfo:
-                        if ( os.path.exists(This.conf['dir'] + "Orig/" +This.fileinfo[line]['name']) == False):
-                            This.logger("\nDocument du CSV manquant dans le répertoire","Error",silence)
+                    for line in self.fileinfo:
+                        if ( os.path.exists(self.conf['dir'] + "Orig/" +self.fileinfo[line]['name']) == False):
+                            self.logger("","",silence)
+                            self.logger("Document du CSV manquant dans le répertoire","Error",silence)
                             check_package_conf = False
                             break
                 else:
-                    This.logger("\nLe fichier list.csv est introuvable\n","Error",silence)
+                    self.logger("","",silence)
+                    self.logger("Le fichier list.csv est introuvable","Error",silence)
+                    self.logger("","",silence)
 
-                if (os.path.exists(This.conf['dir'] + "Conf/aspects.conf") and check_package_conf ):    
+                if (os.path.exists(self.conf['dir'] + "Conf/aspects.conf") and check_package_conf ):    
+                    self.logger("","",silence)
+                    self.logger("Liste des aspects :","",silence)
+                    self.logger("","",silence)
 
-                    This.logger("\nListe des aspects :\n","",silence)
-
-                    file = open(This.conf['dir'] + "Conf/aspects.conf", "r")
+                    file = open(self.conf['dir'] + "Conf/aspects.conf", "r")
                     for aspect in file.readlines():
-                        This.logger("--> "+aspect.rstrip(),"",silence)
+                        self.logger("--> "+aspect.rstrip(),"",silence)
                     file.close()
                     check_aspects_conf = True
                 else:
                     if ( check_package_conf ):
-                        This.logger("\nLe fichier aspects.conf est introuvable\n","Error",silence)
+                        self.logger("","",silence)
+                        self.logger("Le fichier aspects.conf est introuvable","Error",silence)
+                        self.logger("","",silence)
 
-                if (os.path.exists(This.conf['dir'] + "Conf/properties.csv") and check_package_conf ):    
-                    This.logger("\nListe des propriétés :\n","",silence)
+                if (os.path.exists(self.conf['dir'] + "Conf/properties.csv") and check_package_conf ):
+                    self.logger("","",silence)
+                    self.logger("Liste des propriétés :","",silence)
+                    self.logger("","",silence)
 
-                    csvfile = open(This.conf['dir'] + 'Conf/properties.csv', "rb")
+                    csvfile = open(self.conf['dir'] + 'Conf/properties.csv', "rb")
                     reader = csv.reader(csvfile, delimiter=';', quotechar='"')
 
                     for row in reader:
@@ -319,31 +311,34 @@ class importAlf():
                         else:
                             valuedetail = " : Valeur dynamique du champs CSV '"+fields[int(field)]+"'"
 
-                        This.logger("--> : "+name+valuedetail,"",silence)
+                        self.logger("--> : "+name+valuedetail,"",silence)
                         check_properties_conf = True
                     csvfile.close()
                 else:
                     if ( check_package_conf ):
-                        This.logger("\nLe fichier properties.conf est introuvable\n","Error",silence)       
+                        self.logger("","",silence)
+                        self.logger("Le fichier properties.conf est introuvable","Error",silence)
+                        self.logger("","",silence)
 
                 if ( check_package_conf and check_aspects_conf and check_properties_conf ):
-                    PKGID = This.get_packageid()
+                    PKGID = self.get_packageid()
 
-                    This.confpack['PKGID'] = PKGID
+                    self.confpack['PKGID'] = PKGID
+                    self.logger("","",silence)
+                    self.logger("Package ID : "+self.confpack['PKGID'], "Success",silence)
+                    self.logger(self.conf['dir'] + " : OK.", "Success",silence)
 
-                    This.logger("\nPackage ID : "+This.confpack['PKGID'], "Success",silence)
-                    This.logger(This.conf['dir'] + " : OK.", "Success",silence)
-
-                    This.ButtonGenerate['state'] = "active"
-                    This.ButtonTestHost['state'] = "active"
-                    This.UpdateGuide("Etape 2 : Générez le package")
-                    This.conf['open'] = This.confpack['PKGID']
+                    self.ButtonGenerate['state'] = "active"
+                    self.ButtonTestHost['state'] = "active"
+                    self.UpdateGuide("Etape 2 : Générez le package")
+                    self.conf['open'] = self.confpack['PKGID']
                     return True
                 else:
-                    This.logger("\n"+This.conf['dir'] + " : Erreur.", "Error",silence)
-                    This.ButtonGenerate['state'] = "disabled"
-                    This.ButtonTestHost['state'] = "disabled"
-                    This.ButtonUpload['state'] = "disabled"
+                    self.logger("","",silence)
+                    self.logger(self.conf['dir'] + " : Erreur.", "Error",silence)
+                    self.ButtonGenerate['state'] = "disabled"
+                    self.ButtonTestHost['state'] = "disabled"
+                    self.ButtonUpload['state'] = "disabled"
                     return False
             except Exception, e:
                 print str(e)
@@ -352,41 +347,41 @@ class importAlf():
         def CommandUpload():
             mode = "BULKIMPORTTOOL"
             
-            if ( This.var1.get() == 1 ):
+            if ( self.var1.get() == 1 ):
                 mode = "CMIS"
             
-            TestHost = This.OpenHost(mode,True)
+            TestHost = self.OpenHost(mode,True)
             
             if ( TestHost ):
-                if (os.path.exists(This.conf['dir'] + "Conf/package.conf")):
+                if (os.path.exists(self.conf['dir'] + "Conf/package.conf")):
                     if ( mode == "CMIS" ):
-                        RESULT = This.upload(mode)
+                        RESULT = self.upload(mode)
                     else:
-                        RESULT = This.initiateBulkImport()
+                        RESULT = self.initiateBulkImport()
                     if ( RESULT == True ):
-                        This.logger("Import des documents réussie","Success")
-                        This.UpdateGuide("Terminé")
-                        This.ButtonUpload['state'] = "active"
-                        This.Force['state'] = "active"
+                        self.logger("Import des documents réussie","Success")
+                        self.UpdateGuide("Terminé")
+                        self.ButtonUpload['state'] = "active"
+                        self.Force['state'] = "active"
                     else:
                         if ( RESULT == "Missing" ):
-                            This.logger("Import des documents réussi, mais quelques documents manquants","Success")
+                            self.logger("Import des documents réussi, mais quelques documents manquants","Success")
                         else:
-                            This.logger("Import des documents échoué","Error")
+                            self.logger("Import des documents échoué","Error")
                     
         def ChangeMode():
-            if ( This.var1.get() == 0 ):
-                This.ButtonUpload['text'] = "Importer (mode Bulk Import)"
+            if ( self.var1.get() == 0 ):
+                self.ButtonUpload['text'] = "Importer (mode Bulk Import)"
             else:
-                This.ButtonUpload['text'] = "Mettre à jour (mode CMIS)"
+                self.ButtonUpload['text'] = "Mettre à jour (mode CMIS)"
         
         def CommandTestHost():
             mode = "BULKIMPORTTOOL"
-            TestHost = This.OpenHost(mode, False)
+            TestHost = self.OpenHost(mode, False)
         
         def CommandConfGlobale():
             def SaveConf():
-                file = open(This.dir_path+"/importalf.conf", "wb")
+                file = open(self.dir_path+"/importalf.conf", "wb")
                 file.write("[GLOBAL]\n")
                 file.write("url="+UrlTemp.get()+"\n")
                 file.write("user="+User.get()+"\n")
@@ -396,8 +391,8 @@ class importAlf():
                 file.write("user_ssh="+UserSSH.get()+"\n")
                 file.write("password_ssh="+CredSSH.get()+"\n")
                 file.close()
-                This.conf = This.get_conf()
-                This.conf['dir'] = PathDir['text'] + "/"
+                self.conf = self.get_conf()
+                self.conf['dir'] = PathDir['text'] + "/"
                 fenconf.destroy()
 
             fenconf = Toplevel(fen)
@@ -419,28 +414,25 @@ class importAlf():
             
             
             UrlTemp = Entry(fenconf,bg="white",width=60)
-            UrlTemp.insert(END,This.conf['urltemp'])
+            UrlTemp.insert(END,self.conf['urltemp'])
             
             User = Entry(fenconf,bg="white",width=15)
-            User.insert(END,This.conf['user'])
+            User.insert(END,self.conf['user'])
             
             Cred = Entry(fenconf,show="*",bg="white",width=15)
-            Cred.insert(END,This.conf['password'])
+            Cred.insert(END,self.conf['password'])
             
             UserSSH = Entry(fenconf,bg="white",width=15)
-            UserSSH.insert(END,This.conf['user_ssh'])
+            UserSSH.insert(END,self.conf['user_ssh'])
             
             CredSSH = Entry(fenconf,show="*",bg="white",width=15)
-            CredSSH.insert(END,This.conf['password_ssh'])
+            CredSSH.insert(END,self.conf['password_ssh'])
             
             Host = Entry(fenconf,bg="white",width=45)
-            Host.insert(END,This.conf['host'])
+            Host.insert(END,self.conf['host'])
             
             BulkImportDir = Entry(fenconf,bg="white",width=45)
-            BulkImportDir.insert(END,This.conf['importdir'])
-            
-            Quit = Button(fenconf, text="Quitter", command=fenconf.destroy, relief=RAISED, font=buttonfont)
-            Save = Button(fenconf, text="Sauver", command=SaveConf, relief=RAISED, font=buttonfont)
+            BulkImportDir.insert(END,self.conf['importdir'])
             
             LabelUrlTemp.grid(row=0, column=0,padx=3,pady=1)
             UrlTemp.grid(sticky="W",row=0, column=1,padx=3,pady=1)
@@ -457,53 +449,52 @@ class importAlf():
             UserSSH.grid(sticky="W",row=7, column=1,padx=3,pady=1)
             LabelCredSSH.grid(row=8, column=0,padx=3,pady=1)
             CredSSH.grid(sticky="W",row=8, column=1,padx=3,pady=1)
-            Save.grid(sticky="W",row=9, column=0,padx=3,pady=1)
-            Quit.grid(sticky="E",row=9, column=1,padx=3,pady=1)
             
             fenconf.withdraw()
-            This.posfen(fenconf)
+            l = self.posfen(fenconf,bottom=True)
+            self.displayBottom(fenconf,l,10,partial(SaveConf))
             return
         
         def gen_listFields(box):
-            fields = This.get_fieldsCSV()
+            fields = self.get_fieldsCSV()
             for field in fields:
                 box.insert(field,fields[field])
             return
         
         def CommandCreatePackage():
             def PkgPlace():
-                Place = tkFileDialog.askdirectory(parent=fenconf,title="Choisir le CSV", initialdir=This.dir_path) 
+                Place = tkFileDialog.askdirectory(parent=fenconf,title="Choisir le CSV", initialdir=self.dir_path) 
                 if ( Place == () ):
                     return
                 try:
-                    This.conf['dir'] = Place + "/"
+                    self.conf['dir'] = Place + "/"
                     
-                    if (os.path.exists(This.conf['dir'] + "Conf") == False):
-                        os.mkdir(This.conf['dir']+"Conf")
-                    if (os.path.exists(This.conf['dir'] + "Orig") == False):
-                        os.mkdir(This.conf['dir']+"Orig")
-                    This.get_packageid()
+                    if (os.path.exists(self.conf['dir'] + "Conf") == False):
+                        os.mkdir(self.conf['dir']+"Conf")
+                    if (os.path.exists(self.conf['dir'] + "Orig") == False):
+                        os.mkdir(self.conf['dir']+"Orig")
+                    self.get_packageid()
                     
-                    This.ButtonPkgPlace['state'] = "disabled"
-                    if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
-                        This.ButtonImportCSV['state'] = "active"
-                        This.ButtonConfig['state'] = "active"
-                        This.ButtonAspects['state'] = "active"
-                        This.ButtonProperties['state'] = "active"
-                        This.ButtonImportFiles['state'] = "active"
-                        This.ButtonLoad['state'] = "active"
+                    self.ButtonPkgPlace['state'] = "disabled"
+                    if ( CommandOpenPackage(path=self.conf['dir'],silence=1) ):
+                        self.ButtonImportCSV['state'] = "active"
+                        self.ButtonConfig['state'] = "active"
+                        self.ButtonAspects['state'] = "active"
+                        self.ButtonProperties['state'] = "active"
+                        self.ButtonImportFiles['state'] = "active"
+                        self.ButtonLoad['state'] = "active"
                     else:
-                        This.ButtonImportCSV['state'] = "active"
+                        self.ButtonImportCSV['state'] = "active"
                     
                     return True
                 except Exception, e:
-                    This.logger(str(e),"Error")
+                    self.logger(str(e),"Error")
                     return False
             
             def ImportCSV():
                 try:
-                    if (os.path.exists(This.conf['dir'] + "Conf/list.csv") == True):
-                        rep = This.askYesNo("Attention","Le package en cours de création/modification contient déjà un fichier list.csv.\nConfirmez vous le nouvel import ?",fenconf)
+                    if (os.path.exists(self.conf['dir'] + "Conf/list.csv") == True):
+                        rep = self.askYesNo("Attention","Le package en cours de création/modification contient déjà un fichier list.csv.\nConfirmez vous le nouvel import ?",fenconf)
                         if ( rep == "yes" ):
                             importcsv = True
                         else:
@@ -512,73 +503,73 @@ class importAlf():
                         importcsv = True
 
                     if ( importcsv == True ):
-                        CSV = tkFileDialog.askopenfilename(parent=fenconf,title="Choisir le CSV", initialdir=This.dir_path, \
+                        CSV = tkFileDialog.askopenfilename(parent=fenconf,title="Choisir le CSV", initialdir=self.dir_path, \
                             initialfile="", filetypes = [("Fichiers CSV","*.csv")]) 
-                        shutil.copy2(CSV,This.conf['dir'] + "Conf/list.csv")
+                        shutil.copy2(CSV,self.conf['dir'] + "Conf/list.csv")
                     
-                    This.ButtonPkgPlace['state'] = "disabled"
-                    if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
-                        This.ButtonImportCSV['state'] = "active"
-                        This.ButtonConfig['state'] = "active"
-                        This.ButtonAspects['state'] = "active"
-                        This.ButtonProperties['state'] = "active"
-                        This.ButtonImportFiles['state'] = "active"
-                        This.ButtonLoad['state'] = "active"
+                    self.ButtonPkgPlace['state'] = "disabled"
+                    if ( CommandOpenPackage(path=self.conf['dir'],silence=1) ):
+                        self.ButtonImportCSV['state'] = "active"
+                        self.ButtonConfig['state'] = "active"
+                        self.ButtonAspects['state'] = "active"
+                        self.ButtonProperties['state'] = "active"
+                        self.ButtonImportFiles['state'] = "active"
+                        self.ButtonLoad['state'] = "active"
                     else:
-                        This.ButtonImportCSV['state'] = "active"
-                        This.ButtonConfig['state'] = "active"
-                        This.ButtonAspects['state'] = "active"
-                        This.ButtonProperties['state'] = "active"
-                        This.ButtonImportFiles['state'] = "active"
-                    This.logger("Le fichier CSV a été importé.","Success")
+                        self.ButtonImportCSV['state'] = "active"
+                        self.ButtonConfig['state'] = "active"
+                        self.ButtonAspects['state'] = "active"
+                        self.ButtonProperties['state'] = "active"
+                        self.ButtonImportFiles['state'] = "active"
+                    self.logger("Le fichier CSV a été importé.","Success")
                     return True
                 except Exception, e:
                     return False
 
             def ImportFiles():
-                This.confpack = This.get_confpack()
-                Place = tkFileDialog.askdirectory(parent=fenconf,title="Choisir le dossier contenant les documents", initialdir=This.dir_path)
+                self.confpack = self.get_confpack()
+                Place = tkFileDialog.askdirectory(parent=fenconf,title="Choisir le dossier contenant les documents", initialdir=self.dir_path)
                 try:
                     sourceDir = Place+"/"
-                    fileinfo = This.parse_csv()
+                    fileinfo = self.parse_csv()
                     
-                    This.Bar['maximum'] = len(This.fileinfo)
+                    self.Bar['maximum'] = len(self.fileinfo)
                     val = 1
                     pval = 0
                     
                     for line in fileinfo:
                         if ( os.path.exists(sourceDir + fileinfo[line]['name']) == True):
-                            shutil.copy2(sourceDir + fileinfo[line]['name'],This.conf['dir'] + "Orig/" + fileinfo[line]['name'])
+                            shutil.copy2(sourceDir + fileinfo[line]['name'],self.conf['dir'] + "Orig/" + fileinfo[line]['name'])
                             pval = pval + val
-                            This.Bar['value'] = pval
-                            This.Treatment.update()
+                            self.Bar['value'] = pval
+                            self.Treatment.update()
                         else:
-                            This.logger("Document du CSV manquant dans le répertoire","Error")
+                            self.logger("Document du CSV manquant dans le répertoire","Error")
                             return False
-                    This.ButtonPkgPlace['state'] = "disabled"
-                    if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
-                        This.ButtonImportCSV['state'] = "active"
-                        This.ButtonConfig['state'] = "active"
-                        This.ButtonAspects['state'] = "active"
-                        This.ButtonProperties['state'] = "active"
-                        This.ButtonImportFiles['state'] = "active"
-                        This.ButtonLoad['state'] = "active"
+                    self.ButtonPkgPlace['state'] = "disabled"
+                    if ( CommandOpenPackage(path=self.conf['dir'],silence=1) ):
+                        self.ButtonImportCSV['state'] = "active"
+                        self.ButtonConfig['state'] = "active"
+                        self.ButtonAspects['state'] = "active"
+                        self.ButtonProperties['state'] = "active"
+                        self.ButtonImportFiles['state'] = "active"
+                        self.ButtonLoad['state'] = "active"
                     else:
-                        This.ButtonImportCSV['state'] = "active"
-                        This.ButtonConfig['state'] = "active"
-                        This.ButtonAspects['state'] = "active"
-                        This.ButtonProperties['state'] = "active"
-                        This.ButtonImportFiles['state'] = "active"
+                        self.ButtonImportCSV['state'] = "active"
+                        self.ButtonConfig['state'] = "active"
+                        self.ButtonAspects['state'] = "active"
+                        self.ButtonProperties['state'] = "active"
+                        self.ButtonImportFiles['state'] = "active"
                     pval = pval + val
-                    This.Bar['value'] = pval
-                    This.logger("Les documents ont été importés.","Success")
+                    self.Bar['value'] = pval
+                    self.logger("Les documents ont été importés.","Success")
                     return True
                 except Exception, e:
-                    This.logger(str(e),"Error")
+                    self.logger(str(e),"Error")
                     return False
             
             def Config():
-                def saveConfPkg():
+                def commandSave():
                     complete = True
                     if ( var['OLDNAME'].get() == "" ):
                         complete = False
@@ -594,36 +585,36 @@ class importAlf():
                         complete = False
                     
                     if ( complete == True ):
-                        fields = This.get_fieldsCSV()
+                        fields = self.get_fieldsCSV()
                         try:
-                            file = open(This.conf['dir']+"Conf/package.conf", "wb")
+                            file = open(self.conf['dir']+"Conf/package.conf", "wb")
                             file.write("[PACKAGE]\n")
-                            file.write("OLDNAME="+str(This.getIndex(var['OLDNAME'].get(),fields))+"\n")
-                            file.write("NEWNAME="+str(This.getIndex(var['NEWNAME'].get(),fields))+"\n")
-                            file.write("TITLE="+str(This.getIndex(var['TITLE'].get(),fields))+"\n")
-                            file.write("DESC="+str(This.getIndex(var['DESC'].get(),fields))+"\n")
-                            file.write("TAGS="+str(This.getIndex(var['TAGS'].get(),fields))+"\n")
-                            file.write("DESTPATH="+str(This.getIndex(var['DESTPATH'].get(),fields))+"\n")
+                            file.write("OLDNAME="+str(self.getIndex(var['OLDNAME'].get(),fields))+"\n")
+                            file.write("NEWNAME="+str(self.getIndex(var['NEWNAME'].get(),fields))+"\n")
+                            file.write("TITLE="+str(self.getIndex(var['TITLE'].get(),fields))+"\n")
+                            file.write("DESC="+str(self.getIndex(var['DESC'].get(),fields))+"\n")
+                            file.write("TAGS="+str(self.getIndex(var['TAGS'].get(),fields))+"\n")
+                            file.write("DESTPATH="+str(self.getIndex(var['DESTPATH'].get(),fields))+"\n")
                             file.close()
                         except Exception, e:
-                            This.logger(str(e),"Error")
+                            self.logger(str(e),"Error")
                         fenconfpkg.destroy()
-                        This.ButtonPkgPlace['state'] = "disabled"
-                        if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
-                            This.ButtonImportCSV['state'] = "active"
-                            This.ButtonConfig['state'] = "active"
-                            This.ButtonAspects['state'] = "active"
-                            This.ButtonProperties['state'] = "active"
-                            This.ButtonImportFiles['state'] = "active"
-                            This.ButtonLoad['state'] = "active"
+                        self.ButtonPkgPlace['state'] = "disabled"
+                        if ( CommandOpenPackage(path=self.conf['dir'],silence=1) ):
+                            self.ButtonImportCSV['state'] = "active"
+                            self.ButtonConfig['state'] = "active"
+                            self.ButtonAspects['state'] = "active"
+                            self.ButtonProperties['state'] = "active"
+                            self.ButtonImportFiles['state'] = "active"
+                            self.ButtonLoad['state'] = "active"
                         else:
-                            This.ButtonImportCSV['state'] = "active"
-                            This.ButtonConfig['state'] = "active"
-                            This.ButtonAspects['state'] = "active"
-                            This.ButtonProperties['state'] = "active"
-                            This.ButtonImportFiles['state'] = "active"
+                            self.ButtonImportCSV['state'] = "active"
+                            self.ButtonConfig['state'] = "active"
+                            self.ButtonAspects['state'] = "active"
+                            self.ButtonProperties['state'] = "active"
+                            self.ButtonImportFiles['state'] = "active"
                     else:
-                        This.messageShow("Attention","Vous devez renseigner tous les champs.", fenconfpkg)
+                        self.messageShow("Attention","Vous devez renseigner tous les champs.", fenconfpkg)
                     
                 def updateList(evt, name, key, values):
                     value = name.entry.get()
@@ -636,7 +627,7 @@ class importAlf():
                     if ( already == False ):
                         values[key] = value
                     else:
-                        This.messageShow("Attention","Champ déjà utilisé !!", fenconfpkg)
+                        self.messageShow("Attention","Champ déjà utilisé !!", fenconfpkg)
                         var[key].set("")
                     
                 fenconfpkg = Toplevel(fenconf)
@@ -644,9 +635,6 @@ class importAlf():
 
                 LabelKeys = Label(fenconfpkg, anchor=W, text="Clefs", width=20, font=titlefont)
                 LabelFields = Label(fenconfpkg, anchor=W, text="Champs (CSV)", width=20, font=titlefont)
-
-                LabelKeys.grid(row=0, column=0,padx=3,pady=1)
-                LabelFields.grid(row=0, column=1,padx=3,pady=1)
 
                 LabelOLDNAME = Label(fenconfpkg, anchor=W, text="Fichier PDF", width=20, font=defaultfont)
                 LabelNEWNAME = Label(fenconfpkg, anchor=W, text="Nom d'import", width=20, font=defaultfont)
@@ -688,9 +676,9 @@ class importAlf():
                 gen_listFields(listDESTPATH)
                 listDESTPATH.slistbox.listbox.bind('<ButtonRelease-1>', partial(updateList,name=listDESTPATH,key="DESTPATH",values=values))
                 
-                if (os.path.exists(This.conf['dir'] + "Conf/package.conf") == True):
-                    confpacktmp = This.get_confpack()
-                    fields = This.get_fieldsCSV()
+                if (os.path.exists(self.conf['dir'] + "Conf/package.conf") == True):
+                    confpacktmp = self.get_confpack()
+                    fields = self.get_fieldsCSV()
                     var['OLDNAME'].set(fields[confpacktmp['name']])
                     var['NEWNAME'].set(fields[confpacktmp['newname']])
                     var['TITLE'].set(fields[confpacktmp['title']])
@@ -698,69 +686,64 @@ class importAlf():
                     var['TAGS'].set(fields[confpacktmp['tags']])
                     var['DESTPATH'].set(fields[confpacktmp['path']])
 
-                LabelKeys.grid(row=0, column=0,padx=3,pady=1)
-                LabelFields.grid(row=0, column=1,padx=3,pady=1)
+                LabelKeys.grid(row=0, column=0)
+                LabelFields.grid(row=0, column=1)
 
-                LabelOLDNAME.grid(row=1, column=0,padx=3,pady=1)
-                LabelNEWNAME.grid(row=2, column=0,padx=3,pady=1)
-                LabelTITLE.grid(row=3, column=0,padx=3,pady=1)
-                LabelDESC.grid(row=4, column=0,padx=3,pady=1)
-                LabelTAGS.grid(row=5, column=0,padx=3,pady=1)
-                LabelDESTPATH.grid(row=6, column=0,padx=3,pady=1)
+                LabelOLDNAME.grid(row=1, column=0)
+                LabelNEWNAME.grid(row=2, column=0)
+                LabelTITLE.grid(row=3, column=0)
+                LabelDESC.grid(row=4, column=0)
+                LabelTAGS.grid(row=5, column=0)
+                LabelDESTPATH.grid(row=6, column=0)
 
-                listOLDNAME.grid(row=1, column=1,padx=3,pady=1)
-                listNEWNAME.grid(row=2, column=1,padx=3,pady=1)
-                listTITLE.grid(row=3, column=1,padx=3,pady=1)
-                listDESC.grid(row=4, column=1,padx=3,pady=1)
-                listTAGS.grid(row=5, column=1,padx=3,pady=1)
-                listDESTPATH.grid(row=6, column=1,padx=3,pady=1)
-
-                Quit = Button(fenconfpkg, text="Quitter", command=fenconfpkg.destroy, relief=RAISED, font=buttonfont)
-                Save = Button(fenconfpkg, text="Sauver", command=saveConfPkg, relief=RAISED, font=buttonfont)
-
-                Save.grid(sticky="W",row=7, column=0,padx=3,pady=1)
-                Quit.grid(sticky="E",row=7, column=1,padx=3,pady=1)
+                listOLDNAME.grid(row=1, column=1)
+                listNEWNAME.grid(row=2, column=1)
+                listTITLE.grid(row=3, column=1)
+                listDESC.grid(row=4, column=1)
+                listTAGS.grid(row=5, column=1)
+                listDESTPATH.grid(row=6, column=1)
 
                 fenconfpkg.withdraw()
-                This.posfen(fenconfpkg)
+                l = self.posfen(fenconfpkg,bottom=True)
+                self.displayBottom(fenconfpkg,l,7,partial(commandSave))
                 return
             
             def ConfigAspects():
-                def saveAspects():
+                def commandSave():
                     listaspects = Aspects.get('1.0', 'end')
                     tabaspects = listaspects.split("\n")
                     try:
-                        file = open(This.conf['dir']+"Conf/aspects.conf", "wb")
+                        file = open(self.conf['dir']+"Conf/aspects.conf", "wb")
                         for aspect in tabaspects:
                             if ( aspect != "" ):
                                 file.write(aspect+"\n")
                         file.close()
                         fenconfasp.destroy()
-                        This.ButtonPkgPlace['state'] = "disabled"
-                        if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
-                            This.ButtonImportCSV['state'] = "active"
-                            This.ButtonConfig['state'] = "active"
-                            This.ButtonAspects['state'] = "active"
-                            This.ButtonProperties['state'] = "active"
-                            This.ButtonImportFiles['state'] = "active"
-                            This.ButtonLoad['state'] = "active"
+                        self.ButtonPkgPlace['state'] = "disabled"
+                        if ( CommandOpenPackage(path=self.conf['dir'],silence=1) ):
+                            self.ButtonImportCSV['state'] = "active"
+                            self.ButtonConfig['state'] = "active"
+                            self.ButtonAspects['state'] = "active"
+                            self.ButtonProperties['state'] = "active"
+                            self.ButtonImportFiles['state'] = "active"
+                            self.ButtonLoad['state'] = "active"
                         else:
-                            This.ButtonImportCSV['state'] = "active"
-                            This.ButtonConfig['state'] = "active"
-                            This.ButtonAspects['state'] = "active"
-                            This.ButtonProperties['state'] = "active"
-                            This.ButtonImportFiles['state'] = "active"
+                            self.ButtonImportCSV['state'] = "active"
+                            self.ButtonConfig['state'] = "active"
+                            self.ButtonAspects['state'] = "active"
+                            self.ButtonProperties['state'] = "active"
+                            self.ButtonImportFiles['state'] = "active"
                     except Exception, e:
-                        This.logger(str(e),"Error")
+                        self.logger(str(e),"Error")
                     return
                 
                 fenconfasp = Toplevel(fenconf)
                 fenconfasp.title("Configutation des aspects")
                 
-                Aspects = Text(fenconfasp,bg="white",width=30,height=10)
+                Aspects = Text(fenconfasp,bg="white",width=35,height=10)
                 
-                if (os.path.exists(This.conf['dir'] + "Conf/aspects.conf") == True):
-                    file = open(This.conf['dir'] + "Conf/aspects.conf", "r")
+                if (os.path.exists(self.conf['dir'] + "Conf/aspects.conf") == True):
+                    file = open(self.conf['dir'] + "Conf/aspects.conf", "r")
                     line = 1
                     for aspect in file.readlines():
                         if ( aspect != "\n" ):
@@ -768,16 +751,11 @@ class importAlf():
                             line=line+1
                     file.close()
                 
-                Aspects.grid(sticky="W",row=0, columnspan=2,padx=3,pady=1)
-
-                Quit = Button(fenconfasp, text="Quitter", command=fenconfasp.destroy, relief=RAISED, font=buttonfont)
-                Save = Button(fenconfasp, text="Sauver", command=saveAspects, relief=RAISED, font=buttonfont)
-
-                Save.grid(sticky="W",row=1, column=0,padx=3,pady=1)
-                Quit.grid(sticky="E",row=1, column=1,padx=3,pady=1)
+                Aspects.grid(sticky="W",row=0, columnspan=2)
 
                 fenconfasp.withdraw()
-                This.posfen(fenconfasp)
+                l = self.posfen(fenconfasp,bottom=True)
+                self.displayBottom(fenconfasp,l,1,partial(commandSave))
                 return
             
             def ConfigProperties():
@@ -807,7 +785,7 @@ class importAlf():
                     props[idx]['formatlist'].slistbox.listbox.bind('<ButtonRelease-1>',partial(updateList,name=props[idx]['formatlist'],key=idx,word="format"))
                     
                     if ( type == "STA" ):
-                        props[idx]['value'] = Entry(Block,bg="white",width=15)
+                        props[idx]['value'] = Entry(Block,bg="white",width=15,padx=5)
                     else:
                         props[idx]['value'] = ""
                         props[idx]['valuetix'] = Tix.StringVar()
@@ -816,18 +794,18 @@ class importAlf():
                         props[idx]['valuelist'].entry.config(width=15, state='readonly')
                         props[idx]['valuelist'].slistbox.listbox.bind('<ButtonRelease-1>',partial(updateList,name=props[idx]['valuelist'],key=idx,word="value"))
                     
-                    props[idx]['name'].grid(sticky="W",row=idx, column=0,padx=3,pady=1)
-                    props[idx]['formatlist'].grid(sticky="W",row=idx, column=1,padx=3,pady=1)
+                    props[idx]['name'].grid(sticky="W",row=idx, column=0)
+                    props[idx]['formatlist'].grid(sticky="W",row=idx, column=1)
                     if ( type == "STA" ):
-                        props[idx]['value'].grid(sticky="W",row=idx, column=2,padx=3,pady=1)
+                        props[idx]['value'].grid(sticky="W",row=idx, column=2)
                     else:
-                        props[idx]['valuelist'].grid(sticky="W",row=idx, column=2,padx=3,pady=1)
+                        props[idx]['valuelist'].grid(sticky="W",row=idx, column=2)
                     Block.update_idletasks()
                     return
                             
-                def saveProperties():
-                    file = open(This.conf['dir']+"Conf/properties.csv", "wb")
-                    fields = This.get_fieldsCSV()
+                def commandSave():
+                    file = open(self.conf['dir']+"Conf/properties.csv", "wb")
+                    fields = self.get_fieldsCSV()
                     for idx in props:
                         name = props[idx]['name'].get()
                         format = props[idx]['format']
@@ -835,24 +813,24 @@ class importAlf():
                         if ( type == "STA" ):
                             value = props[idx]['value'].get().decode("utf-8").encode("iso8859_1")
                         else:
-                            value = str(This.getIndex(props[idx]['value'],fields))
+                            value = str(self.getIndex(props[idx]['value'],fields))
                         file.write(name+";"+format+";"+type+";"+value+"\n")
                     file.close()
                     fenconfpro.destroy()
-                    This.ButtonPkgPlace['state'] = "disabled"
-                    if ( CommandOpenPackage(path=This.conf['dir'],silence=1) ):
-                        This.ButtonImportCSV['state'] = "active"
-                        This.ButtonConfig['state'] = "active"
-                        This.ButtonAspects['state'] = "active"
-                        This.ButtonProperties['state'] = "active"
-                        This.ButtonImportFiles['state'] = "active"
-                        This.ButtonLoad['state'] = "active"
+                    self.ButtonPkgPlace['state'] = "disabled"
+                    if ( CommandOpenPackage(path=self.conf['dir'],silence=1) ):
+                        self.ButtonImportCSV['state'] = "active"
+                        self.ButtonConfig['state'] = "active"
+                        self.ButtonAspects['state'] = "active"
+                        self.ButtonProperties['state'] = "active"
+                        self.ButtonImportFiles['state'] = "active"
+                        self.ButtonLoad['state'] = "active"
                     else:
-                        This.ButtonImportCSV['state'] = "active"
-                        This.ButtonConfig['state'] = "active"
-                        This.ButtonAspects['state'] = "active"
-                        This.ButtonProperties['state'] = "active"
-                        This.ButtonImportFiles['state'] = "active"
+                        self.ButtonImportCSV['state'] = "active"
+                        self.ButtonConfig['state'] = "active"
+                        self.ButtonAspects['state'] = "active"
+                        self.ButtonProperties['state'] = "active"
+                        self.ButtonImportFiles['state'] = "active"
                     return
                 
                 props = {}
@@ -863,16 +841,16 @@ class importAlf():
                 AddSTA = Button(fenconfpro, command=addSta, text="Ajout prop. statique", relief=RAISED, font=buttonfont)
                 AddDYN = Button(fenconfpro, command=addDyn, text="Ajout prop. dynamique", relief=RAISED, font=buttonfont)
                 
-                AddSTA.grid(sticky="W",row=0, column=0,padx=3,pady=1)
-                AddDYN.grid(sticky="E",row=0, column=1,padx=3,pady=1)
+                AddSTA.grid(sticky="W",row=0, column=0)
+                AddDYN.grid(sticky="E",row=0, column=1)
                 
-                Block = Canvas(fenconfpro, width=400, height=100)
+                Block = Canvas(fenconfpro)
 
-                Block.grid(sticky="E",row=1, columnspan=2,padx=3,pady=1)
+                Block.grid(sticky="E",row=1, columnspan=2)
                 
-                if (os.path.exists(This.conf['dir'] + "Conf/properties.csv") == True):
-                    fields = This.get_fieldsCSV()
-                    file = open(This.conf['dir'] + "Conf/properties.csv", "r")
+                if (os.path.exists(self.conf['dir'] + "Conf/properties.csv") == True):
+                    fields = self.get_fieldsCSV()
+                    file = open(self.conf['dir'] + "Conf/properties.csv", "r")
                     idx = 1
                     for prop in file.readlines():
                         line = prop.split("\n")[0].split(";")
@@ -892,14 +870,14 @@ class importAlf():
                             props[idx]['format'] = line[1]
                             props[idx]['formattix'].set(line[1])
                                                        
-                            props[idx]['name'].grid(sticky="W",row=idx, column=0,padx=3,pady=1)
-                            props[idx]['formatlist'].grid(sticky="W",row=idx, column=1,padx=3,pady=1)
+                            props[idx]['name'].grid(sticky="W",row=idx, column=0)
+                            props[idx]['formatlist'].grid(sticky="W",row=idx, column=1)
                             
                             
                             if ( props[idx]['type'] == "STA" ):
                                 props[idx]['value'] = Entry(Block,bg="white",width=15)
                                 props[idx]['value'].insert(0,unicode(line[3],"iso8859_1"))
-                                props[idx]['value'].grid(sticky="W",row=idx, column=2,padx=3,pady=1)
+                                props[idx]['value'].grid(sticky="W",row=idx, column=2, padx=5)
                             else:
                                 props[idx]['valuetix'] = Tix.StringVar()
                                 props[idx]['valuelist'] = Tix.ComboBox(Block, editable=1, dropdown=1, variable=props[idx]['valuetix'], width=20, listwidth=50)
@@ -908,23 +886,19 @@ class importAlf():
                                 props[idx]['valuelist'].slistbox.listbox.bind('<ButtonRelease-1>',partial(updateList,name=props[idx]['valuelist'],key=idx,word="value"))
                                 props[idx]['value'] = fields[int(line[3])]
                                 props[idx]['valuetix'].set(fields[int(line[3])])
-                                props[idx]['valuelist'].grid(sticky="W",row=idx, column=2,padx=3,pady=1)
+                                props[idx]['valuelist'].grid(sticky="W",row=idx, column=2)
                             idx=idx+1
                     file.close()
                 
-                Quit = Button(fenconfpro, text="Quitter", command=fenconfpro.destroy, relief=RAISED, font=buttonfont)
-                Save = Button(fenconfpro, text="Sauver", command=saveProperties, relief=RAISED, font=buttonfont)
-
-                Save.grid(sticky="W",row=20, column=0,padx=3,pady=1)
-                Quit.grid(sticky="E",row=20, column=1,padx=3,pady=1)
-
                 fenconfpro.withdraw()
-                This.posfen(fenconfpro)
+                l = self.posfen(fenconfpro,bottom=True)
+                self.displayBottom(fenconfpro,l,19,partial(commandSave))
+                
                 return
             
             def loadPackage():
                 fenconf.destroy()
-                CommandOpenPackage(path=This.conf['dir'])
+                CommandOpenPackage(path=self.conf['dir'])
                 return
             
             fenconf = Toplevel(fen)
@@ -938,52 +912,51 @@ class importAlf():
             PathCSV = Label(fenconf, fg=FGHIDDEN, width=60, font=defaultfont)
             Path = Label(fenconf, fg=FGHIDDEN, width=60, font=defaultfont)
             
-            This.ButtonPkgPlace = Button(fenconf, text='Nouveau', command=PkgPlace, font=buttonfont, relief=GROOVE,width=30)
-            This.ButtonImportCSV = Button(fenconf, text='Importer le CSV', command=ImportCSV, font=buttonfont, relief=GROOVE,width=30)
-            This.ButtonImportCSV.config(state=DISABLED)
-            This.ButtonImportFiles = Button(fenconf, text='Importer les documents', command=ImportFiles, font=buttonfont, relief=GROOVE,width=30)
-            This.ButtonImportFiles.config(state=DISABLED)
-            This.ButtonConfig = Button(fenconf, text='Gestion package.conf', command=Config, font=buttonfont, relief=GROOVE,width=30)
-            This.ButtonConfig.config(state=DISABLED)
-            This.ButtonAspects = Button(fenconf, text='Gestion aspects.conf', command=ConfigAspects, font=buttonfont, relief=GROOVE,width=30)
-            This.ButtonAspects.config(state=DISABLED)
-            This.ButtonProperties = Button(fenconf, text='Gestion properties.csv', command=ConfigProperties, font=buttonfont, relief=GROOVE,width=30)
-            This.ButtonProperties.config(state=DISABLED)
-            This.ButtonLoad = Button(fenconf, text='Exploiter', command=loadPackage, font=buttonfont, relief=GROOVE,width=30)
-            This.ButtonLoad.config(state=DISABLED)
+            self.ButtonPkgPlace = Button(fenconf, text='Nouveau', command=PkgPlace, font=buttonfont, relief=GROOVE,width=30)
+            self.ButtonImportCSV = Button(fenconf, text='Importer le CSV', command=ImportCSV, font=buttonfont, relief=GROOVE,width=30)
+            self.ButtonImportCSV.config(state=DISABLED)
+            self.ButtonImportFiles = Button(fenconf, text='Importer les documents', command=ImportFiles, font=buttonfont, relief=GROOVE,width=30)
+            self.ButtonImportFiles.config(state=DISABLED)
+            self.ButtonConfig = Button(fenconf, text='Gestion package.conf', command=Config, font=buttonfont, relief=GROOVE,width=30)
+            self.ButtonConfig.config(state=DISABLED)
+            self.ButtonAspects = Button(fenconf, text='Gestion aspects.conf', command=ConfigAspects, font=buttonfont, relief=GROOVE,width=30)
+            self.ButtonAspects.config(state=DISABLED)
+            self.ButtonProperties = Button(fenconf, text='Gestion properties.csv', command=ConfigProperties, font=buttonfont, relief=GROOVE,width=30)
+            self.ButtonProperties.config(state=DISABLED)
+            self.ButtonLoad = Button(fenconf, text='Exploiter', command=loadPackage, font=buttonfont, relief=GROOVE,width=30)
+            self.ButtonLoad.config(state=DISABLED)
             
-            if ( This.conf['open'] != "" ):
-                This.ButtonPkgPlace['state'] = "disabled"
-                This.ButtonConfig['state'] = "active"
-                This.ButtonAspects['state'] = "active"
-                This.ButtonProperties['state'] = "active"
-                This.ButtonLoad['state'] = "active"
+            if ( self.conf['open'] != "" ):
+                self.ButtonPkgPlace['state'] = "disabled"
+                self.ButtonConfig['state'] = "active"
+                self.ButtonAspects['state'] = "active"
+                self.ButtonProperties['state'] = "active"
+                self.ButtonLoad['state'] = "active"
             
-            This.ButtonPkgPlace.pack(side=TOP, anchor=W, expand=NO)
-            This.ButtonImportCSV.pack(side=TOP, anchor=W, expand=NO)
-            This.ButtonConfig.pack(side=TOP, anchor=W, expand=NO)
-            This.ButtonAspects.pack(side=TOP, anchor=W, expand=NO)
-            This.ButtonProperties.pack(side=TOP, anchor=W, expand=NO)
-            This.ButtonImportFiles.pack(side=TOP, anchor=W, expand=NO)
-            This.ButtonLoad.pack(side=TOP, anchor=W, expand=NO)
+            self.ButtonPkgPlace.pack(side=TOP, anchor=W, expand=NO)
+            self.ButtonImportCSV.pack(side=TOP, anchor=W, expand=NO)
+            self.ButtonConfig.pack(side=TOP, anchor=W, expand=NO)
+            self.ButtonAspects.pack(side=TOP, anchor=W, expand=NO)
+            self.ButtonProperties.pack(side=TOP, anchor=W, expand=NO)
+            self.ButtonImportFiles.pack(side=TOP, anchor=W, expand=NO)
+            self.ButtonLoad.pack(side=TOP, anchor=W, expand=NO)
             
             fenconf.withdraw()
-            This.posfen(fenconf)
+            self.posfen(fenconf)
 
             return
         
         def CommandClosePackage():
-            This.conf['dir'] = ""
-            This.conf['open'] = ""
-            This.confpack = {}
-            This.Logger.delete('1.0', END)
-            This.ButtonGenerate['state'] = "disabled"
-            This.ButtonTestHost['state'] = "disabled"
-            This.ButtonUpload['state'] = "disabled"
-            This.Force['state'] = "disabled"
-            This.Bar['value'] = 0
-            This.UpdateGuide("Etape 1 : Choisissez le dossier contenant le package")
-            
+            self.conf['dir'] = ""
+            self.conf['open'] = ""
+            self.confpack = {}
+            self.Logger.delete('1.0', END)
+            self.ButtonGenerate['state'] = "disabled"
+            self.ButtonTestHost['state'] = "disabled"
+            self.ButtonUpload['state'] = "disabled"
+            self.Force['state'] = "disabled"
+            self.Bar['value'] = 0
+            self.UpdateGuide("Etape 1 : Choisissez le dossier contenant le package")
         
         ### Fenêtre principale
         fen = Tix.Tk()
@@ -995,14 +968,14 @@ class importAlf():
         
         # Polices
         defaultfont = tkFont.Font(fen, size=10, family='Verdana', slant='italic')
-        titlefont = tkFont.Font(fen, size=11, family='Verdana', weight='bold')
+        titlefont = tkFont.Font(fen, size=10, family='Verdana', weight='bold')
         menufont = tkFont.Font(fen, size=10, family='Verdana', weight='bold')
         submenufont = tkFont.Font(fen, size=10, family='Verdana')
         guidefont = tkFont.Font(fen, size=11, family='Verdana', weight='bold')
         buttonfont = tkFont.Font(fen, size=10, family='Verdana', weight='bold')
         forcefont = tkFont.Font(fen, size=10, family='Verdana', weight='bold')
 
-        fen.title('Import Alfresco - Version '+This.version)
+        fen.title('Import Alfresco - Version '+self.version)
         fen.config(bg=BG, relief=GROOVE)
 
         FM = Frame(fen, bg="#eee")
@@ -1010,11 +983,11 @@ class importAlf():
         FM3 = Frame(fen, bg="#eee")
         
         # Affichage des logs
-        This.Logger = Text(fen, bg="#5f5f5f", fg="#ccc", width=110, height=40, highlightthickness="0")
-        This.Logger.tag_configure('Error', foreground="#FF8888")
-        This.Logger.tag_configure('Success', foreground="#88FF88")
+        self.Logger = Text(fen, bg="#5f5f5f", fg="#ccc", width=110, height=40, highlightthickness="0")
+        self.Logger.tag_configure('Error', foreground="#FF8888")
+        self.Logger.tag_configure('Success', foreground="#88FF88")
         # Conteneur du traitement
-        This.Treatment = Label(fen, bg=BG, fg=FGHIDDEN, width=60, font=defaultfont)
+        self.Treatment = Label(fen, bg=BG, fg=FGHIDDEN, width=60, font=defaultfont)
         
         menubar = Menu(fen)
         package = Menu(menubar, tearoff=0)
@@ -1033,51 +1006,51 @@ class importAlf():
 
         # Traitement des documents
         # Bouton du traitement
-        This.ButtonGenerate = Button(FM, text='Générer le package', command=CommandGenerate, font=buttonfont, relief=GROOVE)
-        This.ButtonGenerate.config(state=DISABLED)
+        self.ButtonGenerate = Button(FM, text='Générer le package', command=CommandGenerate, font=buttonfont, relief=GROOVE)
+        self.ButtonGenerate.config(state=DISABLED)
 
         # Import dans Alfresco
         # Bouton d'upload
-        This.ButtonUpload = Button(FM, text='Importer (mode Bulk Import)', command=CommandUpload, font=buttonfont, relief=GROOVE)
-        This.ButtonUpload.config(state=DISABLED)
+        self.ButtonUpload = Button(FM, text='Importer (mode Bulk Import)', command=CommandUpload, font=buttonfont, relief=GROOVE)
+        self.ButtonUpload.config(state=DISABLED)
         
-        This.ButtonTestHost = Button(FM, text='Test connexions', command=CommandTestHost, font=buttonfont, relief=GROOVE)
-        This.ButtonTestHost.config(state=DISABLED)
+        self.ButtonTestHost = Button(FM, text='Test connexions', command=CommandTestHost, font=buttonfont, relief=GROOVE)
+        self.ButtonTestHost.config(state=DISABLED)
         
-        This.var1 = IntVar()
-        This.Force = Checkbutton(FM2, text = "Mise à jour uniquement (CMIS)", highlightthickness="0", font="forcefont", variable = This.var1 , command=ChangeMode)
-        This.Force.config(state=DISABLED)
+        self.var1 = IntVar()
+        self.Force = Checkbutton(FM2, text = "Mise à jour uniquement (CMIS)", highlightthickness="0", font="forcefont", variable = self.var1 , command=ChangeMode)
+        self.Force.config(state=DISABLED)
 
         # Affichage du guide
-        This.Guide = Text(FM3, bg="ivory", fg="#222", width=110, height=1.4, font=guidefont)
+        self.Guide = Text(FM3, bg="ivory", fg="#222", width=110, height=1.4, font=guidefont)
 
         # Bar de progression
         s = ttk.Style()
         s.theme_use('clam')
         s.configure("red.Horizontal.TProgressbar", foreground='red', background='red')
-        This.Bar = ttk.Progressbar(FM3, style="red.Horizontal.TProgressbar", orient="horizontal", length=300, mode="determinate", maximum=300)
+        self.Bar = ttk.Progressbar(FM3, style="red.Horizontal.TProgressbar", orient="horizontal", length=300, mode="determinate", maximum=300)
 
         # Bouton de nettoyage de l'écran des logs
         #"Clear = Button(FM2, text="Nettoyer les logs", command=CommandClearLog, font=buttonfont, relief=RAISED)
 
         # Placements
-        This.ButtonGenerate.pack(side=LEFT, anchor=W, fill=X, expand=YES)
-        This.ButtonTestHost.pack(side=LEFT, anchor=W, fill=X, expand=YES)
-        This.ButtonUpload.pack(side=LEFT, anchor=W, fill=X, expand=YES)
+        self.ButtonGenerate.pack(side=LEFT, anchor=W, fill=X, expand=YES)
+        self.ButtonTestHost.pack(side=LEFT, anchor=W, fill=X, expand=YES)
+        self.ButtonUpload.pack(side=LEFT, anchor=W, fill=X, expand=YES)
         FM.pack(fill=X)
         FM2.pack(fill=X)
         FM3.pack(fill=X)
-        This.Logger.pack(side=BOTTOM, fill=X)
-        This.Guide.pack(side=BOTTOM, fill=X)
-        This.Bar.pack(side=BOTTOM, fill=X)
-        #This.Mode.pack(side=RIGHT, fill=X)
-        This.Force.pack(side=RIGHT, fill=X)
+        self.Logger.pack(side=BOTTOM, fill=X)
+        self.Guide.pack(side=BOTTOM, fill=X)
+        self.Bar.pack(side=BOTTOM, fill=X)
+        #self.Mode.pack(side=RIGHT, fill=X)
+        self.Force.pack(side=RIGHT, fill=X)
         #Clear.pack(side=RIGHT, fill=X)
 
         #Clear.pack(side=BOTTOM, anchor=W, fill=X, expand=YES)
 
-        This.Guide.tag_configure('tag-center', justify='center')
-        This.UpdateGuide("Etape 1 : Choisissez le dossier contenant le package")
+        self.Guide.tag_configure('tag-center', justify='center')
+        self.UpdateGuide("Etape 1 : Choisissez le dossier contenant le package")
 
         #Center(fen)
         fen.config(menu=menubar)
@@ -1085,16 +1058,51 @@ class importAlf():
         # Taille et position de la fenêtre
         fen.resizable(width=False, height=False)
         
-        This.posfen(fen, 1024, 660)
+        self.posfen(fen, 1024, 660)
         
         fen.mainloop()
 
         return
 
+    # Gui Composer
+    
+    # Taille et position de la fenêtre
+    def posfen(self,fen, FENW=0, FENH=0, bottom=False):
+        RESX = fen.winfo_screenwidth()
+        if ( RESX > 1920 ):
+            RESX = 1920
+        RESY = fen.winfo_screenheight()
         
-    def testWkspace(This, path):
+        if ( FENW == 0 ):
+            fen.after(500,fen.update_idletasks())
+            FENW = fen.winfo_reqwidth()
+            FENH = fen.winfo_reqheight()
+            if ( bottom ):
+                FENH=FENH+50
+                
+        POSX = (RESX - FENW) /2
+        POSY = (RESY - FENH) /2
+
+        fen.geometry(str(FENW)+"x"+str(FENH)+"+"+str(POSX)+"+"+str(POSY))
+        fen.deiconify()
+        
+        return FENW
+
+    def displayBottom(self, fen, l, r, commandSave):
+        buttonfont = tkFont.Font(fen, size=10, family='Verdana', weight='bold')
+        
+        Line = Canvas(fen, width=l, height=10, highlightthickness=0)
+        Line.grid(sticky="W",row=r, columnspan=2)
+        Line.create_line(0,4,1000,4, fill="#555")
+        Quit = Button(fen, text="Quitter", command=fen.destroy, relief=RAISED, font=buttonfont)
+        Save = Button(fen, text="Sauver", command=commandSave, relief=RAISED, font=buttonfont)
+
+        Save.grid(sticky="W",row=r+1, column=0, padx=5)
+        Quit.grid(sticky="E",row=r+1, column=1, padx=5)
+        
+    def testWkspace(self, path):
         try:
-            client = CmisClient(This.conf['url'], This.conf['user'], This.conf['password'])
+            client = CmisClient(self.conf['url'], self.conf['user'], self.conf['password'])
             repo = client.defaultRepository
 
             Folder = repo.getObjectByPath(path)
@@ -1102,9 +1110,9 @@ class importAlf():
         except Exception, e:
             return [False,path + "' : Introuvable", ""]
 
-    def testCMIS(This):
+    def testCMIS(self):
         try:
-            client = CmisClient(This.conf['url'], This.conf['user'], This.conf['password'])
+            client = CmisClient(self.conf['url'], self.conf['user'], self.conf['password'])
 
             repo = client.defaultRepository
             REQ = "select * from cmis:folder where cmis:name = 'Sites'"
@@ -1116,59 +1124,61 @@ class importAlf():
             else:
                 return False
         except Exception, e:
-            This.logger(str(e),"Error")
+            self.logger(str(e),"Error")
             return False
         
-    def testBulkImport(This):
+    def testBulkImport(self):
         try:
             rh = RESTHelper()
-            rh.login(This.conf['user'], This.conf['password'], This.conf['host'], 8080)
+            rh.login(self.conf['user'], self.conf['password'], self.conf['host'], 8080)
             data = rh.statusbulkimport()
             return True
         except Exception, e:
-            This.logger(str(e),"Error")
+            self.logger(str(e),"Error")
             return False
     
-    def getStatusBulkImport(This):
+    def getStatusBulkImport(self):
         try:
             rh = RESTHelper()
-            rh.login(This.conf['user'], This.conf['password'], This.conf['host'], 8080)
+            rh.login(self.conf['user'], self.conf['password'], self.conf['host'], 8080)
             data = rh.statusbulkimport()
             return json.load(data)
         except Exception, e:
-            This.logger(str(e),"Error")
+            self.logger(str(e),"Error")
             return False
     
-    def OpenHost(This, mode, silence):
-        This.Logger.delete('1.0', END)
-        if ( This.conf['host'] != "" ):
-            This.conf['url'] = This.conf['urltemp'].replace("__HOST__", This.conf['host'])
+    def OpenHost(self, mode, silence):
+        self.Logger.delete('1.0', END)
+        if ( self.conf['host'] != "" ):
+            self.conf['url'] = self.conf['urltemp'].replace("__HOST__", self.conf['host'])
             
-            testbulkimport = This.testBulkImport()
+            testbulkimport = self.testBulkImport()
 
             if ( testbulkimport ):
-                This.logger("Test connexion Bulk Import Tool : OK","Success",silence)
+                self.logger("Test connexion Bulk Import Tool : OK","Success",silence)
             else:
-                This.logger("Test connexion Bulk Import Tool : Error","Error",silence)
+                self.logger("Test connexion Bulk Import Tool : Error","Error",silence)
                 return False
             
-            if (os.path.exists(This.conf['dir'] + "Conf/package.conf")):
-                testhost = This.testCMIS()
+            if (os.path.exists(self.conf['dir'] + "Conf/package.conf")):
+                testhost = self.testCMIS()
                 
                 if (testhost != False ):
-                    This.logger("Test connexion CMIS Alfresco ("+This.conf['host']+") : OK","Success",silence)
-                    This.logger("\nTest des destinations du CSV :\n","",silence)
+                    self.logger("Test connexion CMIS Alfresco ("+self.conf['host']+") : OK","Success",silence)
+                    self.logger("","",silence)
+                    self.logger("Test des destinations du CSV :","",silence)
+                    self.logger("","",silence)
 
                     pathlist = {}
                     WKTEST = True
-                    for fid in This.fileinfo:
+                    for fid in self.fileinfo:
 
-                        path = This.fileinfo[fid]['upath']
+                        path = self.fileinfo[fid]['upath']
 
                         if ( path not in pathlist ):
                             pathlist[path] = True
-                            test = This.testWkspace(path)
-                            This.logger(test[1], test[2],silence)
+                            test = self.testWkspace(path)
+                            self.logger(test[1], test[2],silence)
                             if ( test[0] == False ):
                                 WKTEST = False
                 else:
@@ -1176,32 +1186,35 @@ class importAlf():
 
                 if ( WKTEST == True ):
                     if ( mode == "BULKIMPORTTOOL" ):
-                        This.ButtonUpload['state'] = "active"
-                        This.Force['state'] = "active"
+                        self.ButtonUpload['state'] = "active"
+                        self.Force['state'] = "active"
                     else:
-                        This.ButtonUpload['state'] = "active"
-                        This.var1.set(1)
-                        This.Force['state'] = "active"
+                        self.ButtonUpload['state'] = "active"
+                        self.var1.set(1)
+                        self.Force['state'] = "active"
                     return True
                 else:
-                    This.Force['state'] = "disabled"
-                    This.var1.set(0)
-                    This.logger("\nTest des destinations : dossiers manquants (sans conséquences en mode Bulk Import Tool)","",silence)
-                    This.logger("\nPour le mode CMIS (mise à jour), le mode Bulk Import Tool doit être lancé en premier)","",silence)
-                    This.ButtonUpload['text'] = "Importer (mode Bulk Import)"
+                    self.Force['state'] = "disabled"
+                    self.var1.set(0)
+                    self.logger("","",silence)
+                    self.logger("Test des destinations : dossiers manquants (sans conséquences en mode Bulk Import Tool)","",silence)
+                    self.logger("","",silence)
+                    self.logger("Pour le mode CMIS (mise à jour), le mode Bulk Import Tool doit être lancé en premier)","",silence)
+                    self.ButtonUpload['text'] = "Importer (mode Bulk Import)"
                     if ( mode == "BULKIMPORTTOOL" ):
                         return True
                     else:
                         return False
         else:
-            This.logger("\nLe serveur hôte Alfresco n'est pas configuré","Error")
+            self.logger("","",silence)
+            self.logger("Le serveur hôte Alfresco n'est pas configuré","Error",silence)
             
 
     # Get files informations from CSV
-    def parse_csv(This):
-        This.fileinfo = {}
+    def parse_csv(self):
+        self.fileinfo = {}
 
-        csvfile = open(This.conf['dir'] + 'Conf/list.csv', "rb")
+        csvfile = open(self.conf['dir'] + 'Conf/list.csv', "rb")
         reader = csv.reader(csvfile, delimiter=';', quotechar='"')
         firstline = 1    
         for row in reader:
@@ -1209,43 +1222,43 @@ class importAlf():
                 firstline = 0
             else:
                 fid = str(row[0])
-                name = unicode(row[This.confpack['name']], "iso8859_1")
-                newname = unicode(row[This.confpack['newname']], "iso8859_1")
-                bname = row[This.confpack['name']]
-                bnewname = row[This.confpack['newname']]
-                title = unicode(row[This.confpack['title']], "iso8859_1")
-                description = unicode(row[This.confpack['desc']], "iso8859_1")
-                tags = unicode(row[This.confpack['tags']], "iso8859_1").split(",")
-                path = unicode(row[This.confpack['path']], "iso8859_1")
-                upath = row[This.confpack['path']].decode('iso8859_1').encode('utf-8')
+                name = unicode(row[self.confpack['name']], "iso8859_1")
+                newname = unicode(row[self.confpack['newname']], "iso8859_1")
+                bname = row[self.confpack['name']]
+                bnewname = row[self.confpack['newname']]
+                title = unicode(row[self.confpack['title']], "iso8859_1")
+                description = unicode(row[self.confpack['desc']], "iso8859_1")
+                tags = unicode(row[self.confpack['tags']], "iso8859_1").split(",")
+                path = unicode(row[self.confpack['path']], "iso8859_1")
+                upath = row[self.confpack['path']].decode('iso8859_1').encode('utf-8')
 
                 idx = "F" + fid
 
-                This.fileinfo[idx] = {}
-                This.fileinfo[idx]['id'] = fid
-                This.fileinfo[idx]['title'] = title
-                This.fileinfo[idx]['description'] = description
-                This.fileinfo[idx]['tags'] = tags
-                This.fileinfo[idx]['name'] = name
-                This.fileinfo[idx]['newname'] = newname
+                self.fileinfo[idx] = {}
+                self.fileinfo[idx]['id'] = fid
+                self.fileinfo[idx]['title'] = title
+                self.fileinfo[idx]['description'] = description
+                self.fileinfo[idx]['tags'] = tags
+                self.fileinfo[idx]['name'] = name
+                self.fileinfo[idx]['newname'] = newname
 
                 # Version sans unicode
-                This.fileinfo[idx]['bname'] = bname
-                This.fileinfo[idx]['bnewname'] = bnewname
+                self.fileinfo[idx]['bname'] = bname
+                self.fileinfo[idx]['bnewname'] = bnewname
 
-                This.fileinfo[idx]['path'] = path
-                This.fileinfo[idx]['upath'] = upath
+                self.fileinfo[idx]['path'] = path
+                self.fileinfo[idx]['upath'] = upath
 
-                This.fileinfo[idx]['properties'] = {}
+                self.fileinfo[idx]['properties'] = {}
 
-                This.fileinfo[idx]['properties'] = This.get_properties(This.fileinfo[idx]['properties'], row)
+                self.fileinfo[idx]['properties'] = self.get_properties(self.fileinfo[idx]['properties'], row)
 
         csvfile.close()
 
-        return This.fileinfo
+        return self.fileinfo
 
-    def get_aspects(This):
-        file = open(This.conf['dir'] + "Conf/aspects.conf", "r")
+    def get_aspects(self):
+        file = open(self.conf['dir'] + "Conf/aspects.conf", "r")
         Aspects = []
         for aspect in file.readlines():
             if ( aspect != "\n"):
@@ -1253,8 +1266,8 @@ class importAlf():
         file.close()
         return Aspects
 
-    def get_properties(This,tab, data):
-        csvfile = open(This.conf['dir'] + 'Conf/properties.csv', "rb")
+    def get_properties(self,tab, data):
+        csvfile = open(self.conf['dir'] + 'Conf/properties.csv', "rb")
         reader = csv.reader(csvfile, delimiter=';', quotechar='"')
 
         for row in reader:
@@ -1274,65 +1287,65 @@ class importAlf():
         csvfile.close()
         return tab
 
-    def generatepack(This):  
+    def generatepack(self):  
         counter = 1
-        This.Bar['maximum'] = len(This.fileinfo)
+        self.Bar['maximum'] = len(self.fileinfo)
         val = 1
         pval = 0
         
             
-        for fid in This.fileinfo:
-            name = This.fileinfo[fid]['name']
-            newname = This.fileinfo[fid]['newname']
-            title = This.fileinfo[fid]['title']
-            description = This.fileinfo[fid]['description']
-            path = This.fileinfo[fid]['path']
+        for fid in self.fileinfo:
+            name = self.fileinfo[fid]['name']
+            newname = self.fileinfo[fid]['newname']
+            title = self.fileinfo[fid]['title']
+            description = self.fileinfo[fid]['description']
+            path = self.fileinfo[fid]['path']
             
-            if ( os.path.exists(This.conf['dir'] + This.confpack['PKGID'] + path +'/'+newname) ):
-                This.logger(str(counter) + " - " + newname + " existe déjà","")
+            if ( os.path.exists(self.conf['dir'] + self.confpack['PKGID'] + path +'/'+newname) ):
+                self.logger(str(counter) + " - " + newname + " existe déjà","")
                 
                 pval = pval + val
-                This.Bar['value'] = pval
+                self.Bar['value'] = pval
 
-                This.logger(str(counter) + " - " + newname,"")
+                self.logger(str(counter) + " - " + newname,"")
                 counter = counter + 1
             else :
-                pdf = PdfFileReader(open(This.conf['dir'] + "Orig/" + name, 'rb'))
+                pdf = PdfFileReader(open(self.conf['dir'] + "Orig/" + name, 'rb'))
 
                 if (pdf.getIsEncrypted()):
                     pdf.decrypt('')
 
                 data = {u'/Title':u'%s' % title, u'/Subject':u'%s' % description}
 
-                This.add_metadata(name, path, newname, data)
+                self.add_metadata(name, path, newname, data)
                 LOG = u"Traitement des métadonnées du document '%s'" % (newname)
 
-                This.genXMLProperties(fid)
+                self.genXMLProperties(fid)
 
                 pval = pval + val
-                This.Bar['value'] = pval
+                self.Bar['value'] = pval
 
-                This.logger(str(counter) + " - " + newname,"")
+                self.logger(str(counter) + " - " + newname,"")
                 counter = counter + 1
 
         pval = pval + val        
-        This.Bar['value'] = pval
+        self.Bar['value'] = pval
 
-        if ( This.Bar['value'] >= This.Bar['maximum'] ):
+        if ( self.Bar['value'] >= self.Bar['maximum'] ):
             return True
         else:
             return False
         
-    def genXMLProperties(This,fid):
-        id = This.fileinfo[fid]['id']
+    def genXMLProperties(self,fid):
+        id = self.fileinfo[fid]['id']
 
-        xmlfile = open(This.conf['dir'] + This.confpack['PKGID'] +This.fileinfo[fid]['path']+'/'+This.fileinfo[fid]['newname']+'.metadata.properties.xml', "wb")
+        xmlfile = open(self.conf['dir'] + self.confpack['PKGID'] +self.fileinfo[fid]['path']+'/'+self.fileinfo[fid]['newname']+'.metadata.properties.xml', "wb")
         
         xmlfile.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">\n<properties>\n')
         xmlfile.write('<entry key="separator"> # </entry>\n')
         xmlfile.write('<entry key="type">cm:content</entry>\n')
         
-        Aspects = This.get_aspects()
+        Aspects = self.get_aspects()
         
         Aspects.append("ialf:package")
         
@@ -1348,13 +1361,13 @@ class importAlf():
         
         xmlfile.write('<entry key="aspects">%s</entry>\n' % listasp)
         
-        for prop in This.fileinfo[fid]['properties']:
+        for prop in self.fileinfo[fid]['properties']:
             propname = prop
-            propvalue = This.fileinfo[fid]['properties'][prop]
+            propvalue = self.fileinfo[fid]['properties'][prop]
 
             xmlfile.write(u'<entry key="%s">%s</entry>\n' % (propname, propvalue))
             
-        xmlfile.write(u'<entry key="ialf:packageid">%s</entry>\n' % (This.confpack['PKGID']+"_"+id))
+        xmlfile.write(u'<entry key="ialf:packageid">%s</entry>\n' % (self.confpack['PKGID']+"_"+id))
         
         xmlfile.write('</properties>\n')
         
@@ -1362,46 +1375,48 @@ class importAlf():
         
         return
 
-    def add_metadata(This,name, path, newname, data):
+    def add_metadata(self,name, path, newname, data):
         merger = PdfFileMerger()
 
-        with open(This.conf['dir'] + 'Orig/%s' % name, 'rb') as f0:
+        with open(self.conf['dir'] + 'Orig/%s' % name, 'rb') as f0:
             merger.append(f0)
 
         merger.addMetadata(data)
 
-        if not os.path.exists(os.path.dirname(This.conf['dir'] + This.confpack['PKGID'] + '%s/%s' % (path,newname))):
-            os.makedirs(os.path.dirname(This.conf['dir'] + This.confpack['PKGID'] + '%s/%s' % (path,newname)))
+        if not os.path.exists(os.path.dirname(self.conf['dir'] + self.confpack['PKGID'] + '%s/%s' % (path,newname))):
+            os.makedirs(os.path.dirname(self.conf['dir'] + self.confpack['PKGID'] + '%s/%s' % (path,newname)))
 
-        with open(This.conf['dir'] + This.confpack['PKGID'] + '%s/%s' % (path,newname), 'wb') as f1:
+        with open(self.conf['dir'] + self.confpack['PKGID'] + '%s/%s' % (path,newname), 'wb') as f1:
             merger.write(f1)
 
-    def upload(This, mode):  
+    def upload(self, mode):  
         counter = 1
-        This.Bar['maximum'] = len(This.fileinfo)
-        This.Bar['value'] = 0 
-        This.logger("\nDébut de l'import vers "+This.conf['host'],"")
+        self.Bar['maximum'] = len(self.fileinfo)
+        self.Bar['value'] = 0
+        self.logger("","")
+        self.logger("Début de l'import vers "+self.conf['host'],"")
         FileMissing = False
-        for fid in This.fileinfo:
-            newname = This.fileinfo[fid]['newname']
-            #This.cmisCreate(newname, This.fileinfo[fid], force, counter)
-            RETURN = This.updateCmis(This.fileinfo[fid], counter)
+        for fid in self.fileinfo:
+            newname = self.fileinfo[fid]['newname']
+            #self.cmisCreate(newname, self.fileinfo[fid], force, counter)
+            RETURN = self.updateCmis(self.fileinfo[fid], counter)
             if ( RETURN == False ):
-                This.logger("Document '"+newname+"' manquant","Error")
+                self.logger("Document '"+newname+"' manquant","Error")
                 FileMissing = True
             counter=counter+1
 
-        if ( This.Bar['value'] >= This.Bar['maximum'] ):
+        if ( self.Bar['value'] >= self.Bar['maximum'] ):
             if ( FileMissing ):
-                This.logger("\nATTENTION: des documents du package sont manquant dans Alfresco. Vous devez sans doute relancer l'import en mode Bulk Import Tool.","Error")
+                self.logger("","")
+                self.logger("ATTENTION: des documents du package sont manquant dans Alfresco. Vous devez sans doute relancer l'import en mode Bulk Import Tool.","Error")
                 return "Missing"
             return True
         else:
             return False
 
-    def getSitesId(This):
+    def getSitesId(self):
         try:
-            client = CmisClient(This.conf['url'], This.conf['user'], This.conf['password'])
+            client = CmisClient(self.conf['url'], self.conf['user'], self.conf['password'])
 
             repo = client.defaultRepository
             REQ = "select * from cmis:folder where cmis:name = 'Sites'"
@@ -1413,20 +1428,20 @@ class importAlf():
             else:
                 return False
         except Exception, e:
-            This.logger(str(e),"Error")
+            self.logger(str(e),"Error")
             return False
 
-    def cmisCreate(This, name, onefileinfo, force, counter):
+    def cmisCreate(self, name, onefileinfo, force, counter):
             id = onefileinfo['id']
             pathdst = onefileinfo['path']
 
-            client = CmisClient(This.conf['url'], This.conf['user'], This.conf['password'])
+            client = CmisClient(self.conf['url'], self.conf['user'], self.conf['password'])
 
             repo = client.defaultRepository
 
-            Folder = repo.getObject("workspace://SpaceStore/" + This.conf['wkimports'])
+            Folder = repo.getObject("workspace://SpaceStore/" + self.conf['wkimports'])
 
-            REQ = "select * from ialf:package where ialf:packageid = '" + This.confpack['PKGID'] + "_" + id + "'"
+            REQ = "select * from ialf:package where ialf:packageid = '" + self.confpack['PKGID'] + "_" + id + "'"
 
             results = repo.query(REQ)
 
@@ -1434,32 +1449,32 @@ class importAlf():
             if (len(results) == 0):
                 try:
                     LOG = u"Création du document %s" % name
-                    File = open(This.conf['dir'] + This.confpack['PKGID'] + pathdst + "/" + name, 'r')
-                    Doc = Folder.createDocument(This.confpack['PKGID'] + "_" + id+".pdf", contentFile=File)
+                    File = open(self.conf['dir'] + self.confpack['PKGID'] + pathdst + "/" + name, 'r')
+                    Doc = Folder.createDocument(self.confpack['PKGID'] + "_" + id+".pdf", contentFile=File)
                     File.close()
-                    This.logger(LOG,"")
-                    REQ = "select * from cmis:document where cmis:name = '" + This.confpack['PKGID'] + "_" + id+".pdf" + "'"
+                    self.logger(LOG,"")
+                    REQ = "select * from cmis:document where cmis:name = '" + self.confpack['PKGID'] + "_" + id+".pdf" + "'"
                     force = 1
                 except Exception, e:
-                    This.logger(u"Problème de création du document %s" % name,"Error")
-                    This.logger(str(e),"Error")
+                    self.logger(u"Problème de création du document %s" % name,"Error")
+                    self.logger(str(e),"Error")
             else:
                 LOG = u"%s déjà existant" % name
-                This.logger(LOG,"")
+                self.logger(LOG,"")
 
             if (force == 1):
-               This.updateCmis(onefileinfo, counter)
+               self.updateCmis(onefileinfo, counter)
 
-            This.Bar['value'] = counter
+            self.Bar['value'] = counter
             
-    def updateCmis(This, onefileinfo, counter):
+    def updateCmis(self, onefileinfo, counter):
         id = onefileinfo['id']
 
-        client = CmisClient(This.conf['url'], This.conf['user'], This.conf['password'])
+        client = CmisClient(self.conf['url'], self.conf['user'], self.conf['password'])
 
         repo = client.defaultRepository
 
-        REQ = "select * from ialf:package where ialf:packageid = '" + This.confpack['PKGID'] + "_" + id + "'"
+        REQ = "select * from ialf:package where ialf:packageid = '" + self.confpack['PKGID'] + "_" + id + "'"
 
         results = repo.query(REQ)
         
@@ -1472,14 +1487,14 @@ class importAlf():
                 LOG = u"--> Application des aspects du document %s" % onefileinfo['newname']
                 objectId = str(results[0].id)
                 Doc = repo.getObject("workspace://SpaceStore/" + objectId)
-                Aspects = This.get_aspects()
+                Aspects = self.get_aspects()
                 for aspect in Aspects:
                     Doc.addAspect("P:" + aspect)
                 Doc.addAspect("P:ialf:package")
-                This.logger(LOG,"")
+                self.logger(LOG,"")
             except Exception, e:
-                This.logger(u"Problème d'ajout des aspects pour %s" % onefileinfo['newname'],"Error")
-                This.logger(str(e),"Error")
+                self.logger(u"Problème d'ajout des aspects pour %s" % onefileinfo['newname'],"Error")
+                self.logger(str(e),"Error")
                 return False
 
         # Propriétés
@@ -1491,7 +1506,7 @@ class importAlf():
                 Doc = repo.getObject("workspace://SpaceStore/" + objectId)
                 props = {}
 
-                This.logger(LOG,"")
+                self.logger(LOG,"")
 
                 for prop in onefileinfo['properties']:
                     propname = prop
@@ -1499,12 +1514,12 @@ class importAlf():
 
                     props[propname] = propvalue
 
-                props["ialf:packageid"] = This.confpack['PKGID']+"_"+id
+                props["ialf:packageid"] = self.confpack['PKGID']+"_"+id
                 props["cmis:name"] = onefileinfo['newname']
                 Doc.updateProperties(props)
             except Exception, e:
-                This.logger(u"Problème d'ajout des propriétés pour %s" % onefileinfo['newname'],"Error")
-                This.logger(str(e),"Error")
+                self.logger(u"Problème d'ajout des propriétés pour %s" % onefileinfo['newname'],"Error")
+                self.logger(str(e),"Error")
                 return False
 
         if (len(results) != 0):
@@ -1513,79 +1528,79 @@ class importAlf():
                 for tag in onefileinfo['tags']:
                     if (tag != ""):
                         split_objId = objectId.split(";")
-                        This.add_tags(split_objId[0], tag)
-                This.logger(u"--> Ajout des tags pour %s" % onefileinfo['newname'],"")
+                        self.add_tags(split_objId[0], tag)
+                self.logger(u"--> Ajout des tags pour %s" % onefileinfo['newname'],"")
             except Exception, e:
-                This.logger(u"Problème d'ajout des tags pour %s" % onefileinfo['newname'],"Error")
-                This.logger(str(e),"Error")
+                self.logger(u"Problème d'ajout des tags pour %s" % onefileinfo['newname'],"Error")
+                self.logger(str(e),"Error")
                 return False
         
         # Déplacement du document
 #        try:
-#            REQ = "select * from ialf:package where ialf:packageid = '" + This.confpack['PKGID'] + "_" + id + "'"
+#            REQ = "select * from ialf:package where ialf:packageid = '" + self.confpack['PKGID'] + "_" + id + "'"
 #            results = repo.query(REQ)
 #            if (len(results) != 0):
 #                objectId = str(results[0].id)
 #                Doc = repo.getObject("workspace://SpaceStore/" + objectId)
 #                parent = Doc.getObjectParents().getResults()[0]
-#                if (str(parent) == This.conf['wkimports']):
-#                    src = repo.getObject("workspace://SpaceStore/" + This.conf['wkimports'])
+#                if (str(parent) == self.conf['wkimports']):
+#                    src = repo.getObject("workspace://SpaceStore/" + self.conf['wkimports'])
 #                    dst = repo.getObject("workspace://SpaceStore/" + wkspacedst)
 #                    Doc.move(src, dst)
 #        except Exception, e:
-#                This.logger(u"Problème de déplacement de %s" % name,"Error")
-#                This.logger(str(e),"Error")
+#                self.logger(u"Problème de déplacement de %s" % name,"Error")
+#                self.logger(str(e),"Error")
 #                return False
 
-        This.Bar['value'] = counter
+        self.Bar['value'] = counter
             
-    def transfertPack(This):
+    def transfertPack(self):
         import scpclient
         try:
             client = paramiko.SSHClient()
             client.load_system_host_keys()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(This.conf['host'], 22, This.conf['user_ssh'], This.conf['password_ssh'])
+            client.connect(self.conf['host'], 22, self.conf['user_ssh'], self.conf['password_ssh'])
             
             createdir = False
             try:
-                with closing(scpclient.Read(client.get_transport(), This.conf['importdir']+"/"+This.confpack['PKGID'])) as scp:
+                with closing(scpclient.Read(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
                     scp.receive('Sites.metadata.properties.xml')
-                    distdir = This.conf['importdir']+"/"+This.confpack['PKGID']
+                    distdir = self.conf['importdir']+"/"+self.confpack['PKGID']
                     if ( distdir != "/"):
                         client.exec_command("rm -fr "+distdir, timeout=60)
                         createdir=True
                     else:
-                        This.logger("Suppression du package distant impossible","Error")
+                        self.logger("Suppression du package distant impossible","Error")
                         return False
             except:
                 createdir = True
             
             if ( createdir ):
-                dirempty=This.conf['dir']+"EMPTY"
+                dirempty=self.conf['dir']+"EMPTY"
                 if (os.path.exists(dirempty) == False):
                     os.mkdir(dirempty)
-                with closing(scpclient.WriteDir(client.get_transport(), This.conf['importdir']+"/"+This.confpack['PKGID'])) as scp:
+                with closing(scpclient.WriteDir(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
                     scp.send_dir(dirempty, override_mode=True, preserve_times=True)
                 os.rmdir(dirempty)
                 
-                with closing(scpclient.Write(client.get_transport(), This.conf['importdir']+"/"+This.confpack['PKGID'])) as scp:
-                    scp.send_file(This.conf['dir'] + This.confpack['PKGID'] + "/Sites.metadata.properties.xml", remote_filename="Sites.metadata.properties.xml")
+                with closing(scpclient.Write(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
+                    scp.send_file(self.conf['dir'] + self.confpack['PKGID'] + "/Sites.metadata.properties.xml", remote_filename="Sites.metadata.properties.xml")
             
-            pathdir = This.conf['dir'] + This.confpack['PKGID'] + "/Sites"
-            with closing(scpclient.WriteDir(client.get_transport(), This.conf['importdir']+"/"+This.confpack['PKGID'])) as scp:
+            pathdir = self.conf['dir'] + self.confpack['PKGID'] + "/Sites"
+            with closing(scpclient.WriteDir(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
                 scp.send_dir(pathdir, override_mode=True, preserve_times=True)
                 
             client.close()
             return True
         except Exception, e:
-            This.logger(str(e),"Error")
+            self.logger(str(e),"Error")
             return False
         
-    def returnStatus(This, result):
+    def returnStatus(self, result):
         tag=""
-        
-        This.logger("\n - Package                       : "+str(result['sourceParameters']['Source Directory']),"")
+        self.logger("","")
+        self.logger(" - Package                       : "+str(result['sourceParameters']['Source Directory']),"")
         
         status = "En attente"
             
@@ -1597,47 +1612,52 @@ class importAlf():
             status = "Succès"
             tag="Success"
         
-        This.logger(" - Statut                        : "+status,tag)
-        This.logger(" - Durée du traitement           : "+str(result['duration']),"")
-        This.logger(" - Taille doc. importés (octets) : "+str(result['targetCounters']['Bytes imported']['Count']),"")
+        self.logger(" - Statut                        : "+status,tag)
+        self.logger(" - Durée du traitement           : "+str(result['duration']),"")
+        self.logger(" - Taille doc. importés (octets) : "+str(result['targetCounters']['Bytes imported']['Count']),"")
         
         if ( result['inProgress'] == False ):
             progress = "Terminé"
         else:
             progress = "En cours"
         
-        This.logger(" - Progression                   : "+progress+"\n",tag)
+        self.logger(" - Progression                   : "+progress,tag)
+        self.logger("","")
             
         return result['inProgress']
     
-    def initiateBulkImport(This):
-        This.logger("\nTransfert du package sur "+This.conf['host']+" (Bulk Import Tool). Patientez...\n","")
-        if ( This.transfertPack() ):
-            This.logger("Transfert du package sur "+This.conf['host']+" OK\n","Success")
+    def initiateBulkImport(self):
+        self.logger("","")
+        self.logger("Transfert du package sur "+self.conf['host']+" (Bulk Import Tool). Patientez...","")
+        self.logger("","")
+        if ( self.transfertPack() ):
+            self.logger("Transfert du package sur "+self.conf['host']+" OK","Success")
+            self.logger("","")
             
             rh = RESTHelper()
-            rh.login(This.conf['user'], This.conf['password'], This.conf['host'], 8080)
+            rh.login(self.conf['user'], self.conf['password'], self.conf['host'], 8080)
 
             try:
-                rh.initiateBulkImport(This.conf['importdir']+"/"+This.confpack['PKGID']+"/","/")
-                This.logger("Initialisation de l'import (Bulk Import Tool)","Success")
+                rh.initiateBulkImport(self.conf['importdir']+"/"+self.confpack['PKGID']+"/","/")
+                self.logger("Initialisation de l'import (Bulk Import Tool)","Success")
                 
-                result = This.getStatusBulkImport()
-                while ( This.returnStatus(result) ):
+                result = self.getStatusBulkImport()
+                while ( self.returnStatus(result) ):
                     time.sleep(2)
-                    This.Logger.delete('8.0', END)
-                    result = This.getStatusBulkImport()
+                    self.Logger.delete('8.0', END)
+                    result = self.getStatusBulkImport()
              
                 return True
             except Exception, e:
-                This.logger(str(e),"Error")
+                self.logger(str(e),"Error")
                 return False
         else:
-            This.logger("Transfert du package sur "+This.conf['host']+" Error\n","Error")
+            self.logger("Transfert du package sur "+self.conf['host']+" Error","Error")
+            self.logger("","")
 
-    def add_tags(This, objectId, tag):
+    def add_tags(self, objectId, tag):
         rh = RESTHelper()
-        rh.login(This.conf['user'], This.conf['password'], This.conf['host'], 8080)
+        rh.login(self.conf['user'], self.conf['password'], self.conf['host'], 8080)
 
         rh.addTag("workspace", "SpacesStore", objectId, tag)
 
