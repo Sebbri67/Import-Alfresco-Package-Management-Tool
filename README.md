@@ -30,7 +30,7 @@ Un mode CMIS est disponible permettant certaines opérations non proposées par 
 
 ## Que fait cette application ?
 
-- Elle préparer les packages d'importation
+- Elle prépare de manière aisée les packages d'importation
 - Elle génère les packages pour l'importation via [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import)
 - Elle transfert les package sur le serveur Alfresco dans un dossier défini
 - Elle déclenche l'importation via [Bulk Import Tool](https://github.com/pmonks/alfresco-bulk-import) (via REST)
