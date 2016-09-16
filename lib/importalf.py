@@ -130,8 +130,16 @@ class importAlf():
         config = ConfigParser.ConfigParser()
         file = open(self.conf['dir'] + "Conf/package.conf", "rb")
         config.readfp(file)
+        listformat = ""
+        if ( "listformat" in self.confpack ):
+            listformat = self.confpack['listformat']
+        listpath = ""
+        if ( "listpath" in self.confpack ):
+            listpath = self.confpack['listpath']
 
         self.confpack = {}
+        self.confpack['listformat'] = listformat
+        self.confpack['listpath'] = listpath
         self.confpack['name'] = int(config.get("PACKAGE", "OLDNAME"))
         self.confpack['newname'] = int(config.get("PACKAGE", "NEWNAME"))
         self.confpack['title'] = int(config.get("PACKAGE", "TITLE"))
@@ -200,6 +208,7 @@ class importAlf():
 
         def CommandOpenPackage(path="",silence=0):
             self.Logger.delete('1.0', END)
+            
             try:
                 if ( path == "" ):
                     # Dialog Box for choose dir package
@@ -221,9 +230,8 @@ class importAlf():
                     self.logger("","",silence)
                     self.logger("Le fichier package.conf est introuvable","Error",silence)
 
-                if (os.path.exists(self.conf['dir'] + "Conf/list.csv") or os.path.exists(self.conf['dir'] + "Conf/list.xls") or os.path.exists(self.conf['dir'] + "Conf/list.xlsx")):    
+                if (os.path.exists(self.conf['dir'] + "Conf/list.csv") or os.path.exists(self.conf['dir'] + "Conf/list.xls") or os.path.exists(self.conf['dir'] + "Conf/list.xlsx")):
                     self.fileinfo = self.parse_csv()
-
                     self.logger("Nombre de documents : "+str(len(self.fileinfo)),"",silence)
 
                     fields = self.get_fieldsCSV()
@@ -248,7 +256,7 @@ class importAlf():
                     self.logger("  DESTPATH    | "+path,"",silence)
                     
                     check_package_conf = True
-                    
+                                  
                     for line in self.fileinfo:
                         if ( os.path.exists(self.conf['dir'] + "Orig/" +self.fileinfo[line]['name']) == False):
                             self.logger("","",silence)
@@ -259,7 +267,7 @@ class importAlf():
                     self.logger("","",silence)
                     self.logger("Le fichier list.csv est introuvable","Error",silence)
                     self.logger("","",silence)
-
+                    
                 if (os.path.exists(self.conf['dir'] + "Conf/aspects.conf") and check_package_conf ):    
                     self.logger("","",silence)
                     self.logger("Liste des aspects :","",silence)
@@ -459,6 +467,7 @@ class importAlf():
                         os.mkdir(self.conf['dir']+"Orig")
                     self.get_packageid()
                     
+                    
                     self.ButtonPkgPlace['state'] = "disabled"
                     if ( CommandOpenPackage(path=self.conf['dir'],silence=1) ):
                         self.ButtonImportCSV['state'] = "active"
@@ -469,7 +478,6 @@ class importAlf():
                         self.ButtonLoad['state'] = "active"
                     else:
                         self.ButtonImportCSV['state'] = "active"
-                    
                     return True
                 except Exception, e:
                     self.logger(str(e),"Error")
@@ -477,8 +485,18 @@ class importAlf():
             
             def ImportCSV():
                 try:
-                    if (os.path.exists(self.conf['dir'] + "Conf/list.csv") == True):
-                        rep = self.askYesNo("Attention","Le package en cours de création/modification contient déjà un fichier list.csv.\nConfirmez vous le nouvel import ?",fenconf)
+                    if (os.path.exists(self.conf['dir'] + "Conf/list.csv") == True or os.path.exists(self.conf['dir'] + "Conf/list.xls") == True or os.path.exists(self.conf['dir'] + "Conf/list.xlsx") == True):
+                        if ( os.path.exists(self.conf['dir'] + "Conf/list.csv") ):
+                            self.confpack['listformat'] = "CSV"
+                            self.confpack['listpath'] = self.conf['dir'] + "Conf/list.csv"
+                        else:
+                            self.confpack['listformat'] = "XLS"
+                            if ( os.path.exists(self.conf['dir'] + "Conf/list.xls") == True ):
+                                self.confpack['listpath'] = self.conf['dir'] + "Conf/list.xls"
+                            else:
+                                self.confpack['listpath'] = self.conf['dir'] + "Conf/list.xlsx"
+                                
+                        rep = self.askYesNo("Attention","Le package en cours de création/modification contient déjà un fichier list.\nConfirmez vous le nouvel import ?",fenconf)
                         if ( rep == "yes" ):
                             importcsv = True
                         else:
@@ -488,8 +506,14 @@ class importAlf():
 
                     if ( importcsv == True ):
                         CSV = tkFileDialog.askopenfilename(parent=fenconf,title="Choisir le CSV", initialdir=self.dir_path, \
-                            initialfile="", filetypes = [("Fichiers CSV","*.csv")]) 
-                        shutil.copy2(CSV,self.conf['dir'] + "Conf/list.csv")
+                            initialfile="", filetypes = [("Fichiers CSV","*.csv"),("Fichiers Excel",("*.xls","*.xlsx"))]) 
+                        EXT = CSV.split(".")[1]
+                        shutil.copy2(CSV,self.conf['dir'] + "Conf/list."+EXT)
+                        self.confpack['listpath'] = self.conf['dir'] + "Conf/list."+EXT
+                        if ( EXT == "csv" or EXT == "CSV"):
+                            self.confpack['listformat'] = "CSV"
+                        else:
+                            self.confpack['listformat'] = "XLS"
                     
                     self.ButtonPkgPlace['state'] = "disabled"
                     if ( CommandOpenPackage(path=self.conf['dir'],silence=1) ):
@@ -615,7 +639,7 @@ class importAlf():
                         var[key].set("")
                     
                 fenconfpkg = Toplevel(fenconf)
-                fenconfpkg.title("Configutation (package.conf)")
+                fenconfpkg.title("Configuration (package.conf)")
 
                 LabelKeys = Label(fenconfpkg, anchor=W, text="Clefs", width=20, font=titlefont)
                 LabelFields = Label(fenconfpkg, anchor=W, text="Champs (CSV)", width=20, font=titlefont)
@@ -769,7 +793,7 @@ class importAlf():
                     props[idx]['formatlist'].slistbox.listbox.bind('<ButtonRelease-1>',partial(updateList,name=props[idx]['formatlist'],key=idx,word="format"))
                     
                     if ( type == "STA" ):
-                        props[idx]['value'] = Entry(Block,bg="white",width=15,padx=5)
+                        props[idx]['value'] = Entry(Block,bg="white",width=15)
                     else:
                         props[idx]['value'] = ""
                         props[idx]['valuetix'] = Tix.StringVar()
@@ -1310,7 +1334,10 @@ class importAlf():
             if (firstline == 1):
                 firstline = 0
             else:
-                fid = str(row[0])
+                if ( isinstance(row[0],float) ):
+                    fid = "%s" % int(row[0])
+                else:
+                    fid = str(row[0])
                 if ( self.confpack['listformat'] == "CSV"):
                     name = unicode(row[self.confpack['name']], "iso8859_1")
                     newname = unicode(row[self.confpack['newname']], "iso8859_1")
@@ -1368,32 +1395,35 @@ class importAlf():
         return Aspects
 
     def get_properties(self,tab, data):
-        csvfile = open(self.conf['dir'] + 'Conf/properties.csv', "rb")
-        reader = csv.reader(csvfile, delimiter=';', quotechar='"')
+        if (os.path.exists(self.conf['dir'] + "Conf/properties.csv") == True):
+            csvfile = open(self.conf['dir'] + 'Conf/properties.csv', "rb")
+            reader = csv.reader(csvfile, delimiter=';', quotechar='"')
 
-        for row in reader:
-            if (row[2] == "DYN"):
-                if ( self.confpack['listformat'] == "CSV" ):
-                    tab[row[0]] = data[int(row[3])]
+            for row in reader:
+                if (row[2] == "DYN"):
+                    if ( self.confpack['listformat'] == "CSV" ):
+                        tab[row[0]] = data[int(row[3])]
+                    else:
+                        if ( isinstance(data[int(row[3])],float) and row[1] == "TXT"):
+                            data[int(row[3])] = int(data[int(row[3])])
+                        tab[row[0]] = u"%s" % data[int(row[3])]
                 else:
-                    if ( isinstance(data[int(row[3])],float) and row[1] == "TXT"):
-                        data[int(row[3])] = int(data[int(row[3])])
-                    tab[row[0]] = u"%s" % data[int(row[3])]
-            else:
-                if ( self.confpack['listformat'] == "XLS" ):
-                    tab[row[0]] = row[3].decode("iso8859_1")
-            
-            if (row[1] == "DATE"):
-                sdate = tab[row[0]].split("/")
-                tab[row[0]] = sdate[2] + "-" + sdate[1] + "-" + sdate[0] + "T00:00:00.000+00:00"
-            if (row[1] == "TXT"):
-                if ( self.confpack['listformat'] == "CSV" ):
-                    tab[row[0]] = unicode(tab[row[0]], "iso8859_1")
-            if (row[1] == "NUM"):
-                tab[row[0]] = int(tab[row[0]])
-        
-        csvfile.close()
-        return tab
+                    if ( self.confpack['listformat'] == "XLS" ):
+                        tab[row[0]] = row[3].decode("iso8859_1")
+
+                if (row[1] == "DATE"):
+                    sdate = tab[row[0]].split("/")
+                    tab[row[0]] = sdate[2] + "-" + sdate[1] + "-" + sdate[0] + "T00:00:00.000+00:00"
+                if (row[1] == "TXT"):
+                    if ( self.confpack['listformat'] == "CSV" ):
+                        tab[row[0]] = unicode(tab[row[0]], "iso8859_1")
+                if (row[1] == "NUM"):
+                    tab[row[0]] = int(tab[row[0]])
+
+            csvfile.close()
+            return tab
+        else:
+            return {}
 
     def generatepack(self):  
         counter = 1
@@ -1639,7 +1669,11 @@ class importAlf():
                 for tag in onefileinfo['tags']:
                     if (tag != ""):
                         split_objId = objectId.split(";")
-                        self.add_tags(split_objId[0], tag)
+                        if ( self.confpack['listformat'] == "CSV" ):
+                            self.add_tags(split_objId[0], tag)
+                        else:
+                            self.add_tags(split_objId[0], tag.decode("utf-8").encode("utf-8"))
+                            
                 self.logger(u"--> Ajout des tags pour %s" % onefileinfo['newname'],"")
             except Exception, e:
                 self.logger(u"Problème d'ajout des tags pour %s" % onefileinfo['newname'],"Error")
