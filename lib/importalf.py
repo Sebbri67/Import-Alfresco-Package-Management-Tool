@@ -18,6 +18,7 @@ from cmislib import CmisClient
 from cmislib import Folder
 from cmislib import Repository
 import lib.cmislibalf
+import xlrd
 import os
 import os.path
 import sys
@@ -170,23 +171,6 @@ class importAlf():
     def messageShow(self, title, message, parent):
         return tkMessageBox.showwarning(title,message,parent=parent)
     
-    def get_fieldsCSV(self):
-        csvfile = open(self.conf['dir'] + 'Conf/list.csv', "rb")
-        reader = csv.reader(csvfile, delimiter=';', quotechar='"')
-
-        fields = {}
-
-        for rows in reader:
-            i=0
-            for row in rows:
-                fields[i] = unicode(row,"iso8859_1")
-                i=i+1
-            break
-            
-        csvfile.close()
-        
-        return fields
-    
     def getIndex(self,value,dicto):
         return dicto.keys()[dicto.values().index(value)]
      
@@ -204,8 +188,8 @@ class importAlf():
                     shutil.rmtree(self.conf['dir']+"/"+self.confpack['PKGID'])
                     os.mkdir(self.conf['dir']+"/"+self.confpack['PKGID'])
                     
-                initfile=open(self.conf['dir'] + self.confpack['PKGID'] +"/Sites.metadata.properties.xml","wb")
-                initfile.close()
+#                initfile=open(self.conf['dir'] + self.confpack['PKGID'] +"/Sites.metadata.properties.xml","wb")
+#                initfile.close()
                 RESULT = self.generatepack()
                 if ( RESULT == True ):
                     self.ButtonGenerate['state'] = "disabled"
@@ -237,7 +221,7 @@ class importAlf():
                     self.logger("","",silence)
                     self.logger("Le fichier package.conf est introuvable","Error",silence)
 
-                if (os.path.exists(self.conf['dir'] + "Conf/list.csv")):    
+                if (os.path.exists(self.conf['dir'] + "Conf/list.csv") or os.path.exists(self.conf['dir'] + "Conf/list.xls") or os.path.exists(self.conf['dir'] + "Conf/list.xlsx")):    
                     self.fileinfo = self.parse_csv()
 
                     self.logger("Nombre de documents : "+str(len(self.fileinfo)),"",silence)
@@ -1214,26 +1198,139 @@ class importAlf():
             
 
     # Get files informations from CSV
+#    def parse_csv(self):
+#        self.fileinfo = {}
+#
+#        csvfile = open(self.conf['dir'] + 'Conf/list.csv', "rb")
+#        reader = csv.reader(csvfile, delimiter=';', quotechar='"')
+#        firstline = 1    
+#        for row in reader:
+#            if (firstline == 1):
+#                firstline = 0
+#            else:
+#                fid = str(row[0])
+#                name = unicode(row[self.confpack['name']], "iso8859_1")
+#                newname = unicode(row[self.confpack['newname']], "iso8859_1")
+#                bname = row[self.confpack['name']]
+#                bnewname = row[self.confpack['newname']]
+#                title = unicode(row[self.confpack['title']], "iso8859_1")
+#                description = unicode(row[self.confpack['desc']], "iso8859_1")
+#                tags = unicode(row[self.confpack['tags']], "iso8859_1").split(",")
+#                path = unicode(row[self.confpack['path']], "iso8859_1")
+#                upath = row[self.confpack['path']].decode('iso8859_1').encode('utf-8')
+#
+#                idx = "F" + fid
+#
+#                self.fileinfo[idx] = {}
+#                self.fileinfo[idx]['id'] = fid
+#                self.fileinfo[idx]['title'] = title
+#                self.fileinfo[idx]['description'] = description
+#                self.fileinfo[idx]['tags'] = tags
+#                self.fileinfo[idx]['name'] = name
+#                self.fileinfo[idx]['newname'] = newname
+#
+#                # Version sans unicode
+#                self.fileinfo[idx]['bname'] = bname
+#                self.fileinfo[idx]['bnewname'] = bnewname
+#
+#                self.fileinfo[idx]['path'] = path
+#                self.fileinfo[idx]['upath'] = upath
+#
+#                self.fileinfo[idx]['properties'] = {}
+#
+#                self.fileinfo[idx]['properties'] = self.get_properties(self.fileinfo[idx]['properties'], row)
+#
+#        csvfile.close()
+#
+#        return self.fileinfo
+
+    def get_fieldsCSV(self):
+        fields = {}
+        
+        if ( self.confpack['listformat'] == "XLS" ):
+            wb = xlrd.open_workbook(self.confpack['listpath'])
+        else:   
+            csvfile = open(self.confpack['listpath'], "rb")
+            reader = csv.reader(csvfile, delimiter=';', quotechar='"')
+        
+        if ( self.confpack['listformat'] == "XLS" ):
+            reader = []
+            feuils =  wb.sheet_names()
+            sh = wb.sheet_by_name(feuils[0])
+            for rownum in range(sh.nrows):
+                row = sh.row_values(rownum)
+                reader.append(row)
+        
+        for rows in reader:
+            i=0
+            for row in rows:
+                if ( self.confpack['listformat'] == "CSV" ):
+                    fields[i] = unicode(row,"iso8859_1")
+                else:
+                    fields[i] = row
+                i=i+1
+            break
+        
+        if ( self.confpack['listformat'] == "CSV" ):
+            csvfile.close()
+        
+        return fields
+    
+        # Get files informations from XLS or CSV
     def parse_csv(self):
         self.fileinfo = {}
+        
+        self.confpack['listformat'] = "XLS"
+        
+        if ( os.path.exists(self.conf['dir'] + 'Conf/list.xls') == True ):
+            wb = xlrd.open_workbook(self.conf['dir'] + 'Conf/list.xls')
+            self.confpack['listpath'] = self.conf['dir'] + 'Conf/list.xls'
+        elif ( os.path.exists(self.conf['dir'] + 'Conf/list.xlsx') == True ):
+            wb = xlrd.open_workbook(self.conf['dir'] + 'Conf/list.xlsx')
+            self.confpack['listpath'] = self.conf['dir'] + 'Conf/list.xlsx'
+        elif ( os.path.exists(self.conf['dir'] + 'Conf/list.csv') == True ):    
+            csvfile = open(self.conf['dir'] + 'Conf/list.csv', "rb")
+            reader = csv.reader(csvfile, delimiter=';', quotechar='"')
+            self.confpack['listpath'] = self.conf['dir'] + 'Conf/list.csv'
+            self.confpack['listformat'] = "CSV"
+        else:
+            return self.fileinfo
+        
+        firstline = 1
+        
+        if ( self.confpack['listformat'] == "XLS" ):
+            reader = []
+            feuils =  wb.sheet_names()
+            sh = wb.sheet_by_name(feuils[0])
+            for rownum in range(sh.nrows):
+                row = sh.row_values(rownum)
+                reader.append(row)
 
-        csvfile = open(self.conf['dir'] + 'Conf/list.csv', "rb")
-        reader = csv.reader(csvfile, delimiter=';', quotechar='"')
-        firstline = 1    
         for row in reader:
             if (firstline == 1):
                 firstline = 0
             else:
                 fid = str(row[0])
-                name = unicode(row[self.confpack['name']], "iso8859_1")
-                newname = unicode(row[self.confpack['newname']], "iso8859_1")
-                bname = row[self.confpack['name']]
-                bnewname = row[self.confpack['newname']]
-                title = unicode(row[self.confpack['title']], "iso8859_1")
-                description = unicode(row[self.confpack['desc']], "iso8859_1")
-                tags = unicode(row[self.confpack['tags']], "iso8859_1").split(",")
-                path = unicode(row[self.confpack['path']], "iso8859_1")
-                upath = row[self.confpack['path']].decode('iso8859_1').encode('utf-8')
+                if ( self.confpack['listformat'] == "CSV"):
+                    name = unicode(row[self.confpack['name']], "iso8859_1")
+                    newname = unicode(row[self.confpack['newname']], "iso8859_1")
+                    bname = row[self.confpack['name']]
+                    bnewname = row[self.confpack['newname']]
+                    title = unicode(row[self.confpack['title']], "iso8859_1")
+                    description = unicode(row[self.confpack['desc']], "iso8859_1")
+                    tags = unicode(row[self.confpack['tags']], "iso8859_1").split(",")
+                    path = unicode(row[self.confpack['path']], "iso8859_1")
+                    upath = row[self.confpack['path']].decode('iso8859_1').encode('utf-8')
+                else:
+                    name = row[self.confpack['name']]
+                    newname = row[self.confpack['newname']]
+                    bname = row[self.confpack['name']]
+                    bnewname = row[self.confpack['newname']]
+                    title = row[self.confpack['title']]
+                    description = row[self.confpack['desc']]
+                    tags = row[self.confpack['tags']].split(",")
+                    path = row[self.confpack['path']]
+                    upath = row[self.confpack['path']].encode('utf-8')
 
                 idx = "F" + fid
 
@@ -1244,20 +1341,21 @@ class importAlf():
                 self.fileinfo[idx]['tags'] = tags
                 self.fileinfo[idx]['name'] = name
                 self.fileinfo[idx]['newname'] = newname
-
+                
                 # Version sans unicode
                 self.fileinfo[idx]['bname'] = bname
                 self.fileinfo[idx]['bnewname'] = bnewname
 
                 self.fileinfo[idx]['path'] = path
                 self.fileinfo[idx]['upath'] = upath
-
+                
                 self.fileinfo[idx]['properties'] = {}
 
                 self.fileinfo[idx]['properties'] = self.get_properties(self.fileinfo[idx]['properties'], row)
 
-        csvfile.close()
-
+        if ( self.confpack['listformat'] == "CSV" ):
+            csvfile.close()
+            
         return self.fileinfo
 
     def get_aspects(self):
@@ -1275,18 +1373,25 @@ class importAlf():
 
         for row in reader:
             if (row[2] == "DYN"):
-                tab[row[0]] = data[int(row[3])]
+                if ( self.confpack['listformat'] == "CSV" ):
+                    tab[row[0]] = data[int(row[3])]
+                else:
+                    if ( isinstance(data[int(row[3])],float) and row[1] == "TXT"):
+                        data[int(row[3])] = int(data[int(row[3])])
+                    tab[row[0]] = u"%s" % data[int(row[3])]
             else:
-                tab[row[0]] = row[3]
-                
+                if ( self.confpack['listformat'] == "XLS" ):
+                    tab[row[0]] = row[3].decode("iso8859_1")
+            
             if (row[1] == "DATE"):
                 sdate = tab[row[0]].split("/")
                 tab[row[0]] = sdate[2] + "-" + sdate[1] + "-" + sdate[0] + "T00:00:00.000+00:00"
             if (row[1] == "TXT"):
-                tab[row[0]] = unicode(tab[row[0]], "iso8859_1")
+                if ( self.confpack['listformat'] == "CSV" ):
+                    tab[row[0]] = unicode(tab[row[0]], "iso8859_1")
             if (row[1] == "NUM"):
                 tab[row[0]] = int(tab[row[0]])
-
+        
         csvfile.close()
         return tab
 
@@ -1368,7 +1473,10 @@ class importAlf():
             propname = prop
             propvalue = self.fileinfo[fid]['properties'][prop]
 
-            xmlfile.write(u'<entry key="%s">%s</entry>\n' % (propname, propvalue))
+            if ( self.confpack['listformat'] == "CSV" ):
+                xmlfile.write(u'<entry key="%s">%s</entry>\n' % (propname, propvalue))
+            else:
+                xmlfile.write('<entry key="%s">%s</entry>\n' % (propname, propvalue))
             
         xmlfile.write(u'<entry key="ialf:packageid">%s</entry>\n' % (self.confpack['PKGID']+"_"+id))
         
@@ -1567,15 +1675,15 @@ class importAlf():
             
             createdir = False
             try:
-                with closing(scpclient.Read(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
-                    scp.receive('Sites.metadata.properties.xml')
-                    distdir = self.conf['importdir']+"/"+self.confpack['PKGID']
-                    if ( distdir != "/"):
-                        client.exec_command("rm -fr "+distdir, timeout=60)
-                        createdir=True
-                    else:
-                        self.logger("Suppression du package distant impossible","Error")
-                        return False
+#                with closing(scpclient.Read(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
+#                    scp.receive('Sites.metadata.properties.xml')
+                distdir = self.conf['importdir']+"/"+self.confpack['PKGID']
+                if ( distdir != "/"):
+                    client.exec_command("if [ -d '"+distdir+"' ]; then rm -fr "+distdir+" ; fi", timeout=60)
+                    createdir=True
+                else:
+                    self.logger("Suppression du package distant impossible","Error")
+                    return False
             except:
                 createdir = True
             
@@ -1587,8 +1695,8 @@ class importAlf():
                     scp.send_dir(dirempty, override_mode=True, preserve_times=True)
                 os.rmdir(dirempty)
                 
-                with closing(scpclient.Write(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
-                    scp.send_file(self.conf['dir'] + self.confpack['PKGID'] + "/Sites.metadata.properties.xml", remote_filename="Sites.metadata.properties.xml")
+#                with closing(scpclient.Write(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
+#                    scp.send_file(self.conf['dir'] + self.confpack['PKGID'] + "/Sites.metadata.properties.xml", remote_filename="Sites.metadata.properties.xml")
             
             pathdir = self.conf['dir'] + self.confpack['PKGID'] + "/Sites"
             with closing(scpclient.WriteDir(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
