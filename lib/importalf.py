@@ -30,6 +30,7 @@ import ttk
 import uuid
 import json
 import time
+import chardet
 from functools import partial
 
 import paramiko
@@ -223,13 +224,13 @@ class importAlf():
                 check_package_conf = False
                 check_aspects_conf = False
                 check_properties_conf = False
-
+                
                 if (os.path.exists(self.conf['dir'] + "Conf/package.conf")):
                     self.confpack = self.get_confpack()
                 else:
                     self.logger("","",silence)
                     self.logger("Le fichier package.conf est introuvable","Error",silence)
-
+                
                 if (os.path.exists(self.conf['dir'] + "Conf/list.csv") or os.path.exists(self.conf['dir'] + "Conf/list.xls") or os.path.exists(self.conf['dir'] + "Conf/list.xlsx")):
                     self.fileinfo = self.parse_csv()
                     self.logger("Nombre de documents : "+str(len(self.fileinfo)),"",silence)
@@ -265,9 +266,9 @@ class importAlf():
                             break
                 else:
                     self.logger("","",silence)
-                    self.logger("Le fichier list.csv est introuvable","Error",silence)
+                    self.logger("Le fichier est introuvable","Error",silence)
                     self.logger("","",silence)
-                    
+                   
                 if (os.path.exists(self.conf['dir'] + "Conf/aspects.conf") and check_package_conf ):    
                     self.logger("","",silence)
                     self.logger("Liste des aspects :","",silence)
@@ -332,6 +333,7 @@ class importAlf():
                     self.ButtonTestHost['state'] = "disabled"
                     self.ButtonUpload['state'] = "disabled"
                     return False
+               
             except Exception, e:
                 print str(e)
                 return False
@@ -1119,6 +1121,7 @@ class importAlf():
             Folder = repo.getObjectByPath(path)
             return [True,path + "' : OK", "Success"]
         except Exception, e:
+            print e
             return [False,path + "' : Introuvable", ""]
 
     def testCMIS(self):
@@ -1184,11 +1187,12 @@ class importAlf():
                     WKTEST = True
                     for fid in self.fileinfo:
 
-                        path = self.fileinfo[fid]['upath']
+                        path = self.fileinfo[fid]['path']
+                        upath = self.fileinfo[fid]['upath']
 
                         if ( path not in pathlist ):
                             pathlist[path] = True
-                            test = self.testWkspace(path)
+                            test = self.testWkspace(upath)
                             self.logger(test[1], test[2],silence)
                             if ( test[0] == False ):
                                 WKTEST = False
@@ -1330,6 +1334,7 @@ class importAlf():
                 row = sh.row_values(rownum)
                 reader.append(row)
 
+
         for row in reader:
             if (firstline == 1):
                 firstline = 0
@@ -1357,7 +1362,7 @@ class importAlf():
                     description = row[self.confpack['desc']]
                     tags = row[self.confpack['tags']].split(",")
                     path = row[self.confpack['path']]
-                    upath = row[self.confpack['path']].encode('utf-8')
+                    upath = row[self.confpack['path']].encode('utf8').rstrip()
 
                 idx = "F" + fid
 
@@ -1398,7 +1403,7 @@ class importAlf():
         if (os.path.exists(self.conf['dir'] + "Conf/properties.csv") == True):
             csvfile = open(self.conf['dir'] + 'Conf/properties.csv', "rb")
             reader = csv.reader(csvfile, delimiter=';', quotechar='"')
-
+            
             for row in reader:
                 if (row[2] == "DYN"):
                     if ( self.confpack['listformat'] == "CSV" ):
@@ -1410,6 +1415,8 @@ class importAlf():
                 else:
                     if ( self.confpack['listformat'] == "XLS" ):
                         tab[row[0]] = row[3].decode("iso8859_1")
+                    else:
+                        tab[row[0]] = row[3]
 
                 if (row[1] == "DATE"):
                     sdate = tab[row[0]].split("/")
@@ -1419,7 +1426,7 @@ class importAlf():
                         tab[row[0]] = unicode(tab[row[0]], "iso8859_1")
                 if (row[1] == "NUM"):
                     tab[row[0]] = int(tab[row[0]])
-
+            
             csvfile.close()
             return tab
         else:
@@ -1709,8 +1716,6 @@ class importAlf():
             
             createdir = False
             try:
-#                with closing(scpclient.Read(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
-#                    scp.receive('Sites.metadata.properties.xml')
                 distdir = self.conf['importdir']+"/"+self.confpack['PKGID']
                 if ( distdir != "/"):
                     client.exec_command("if [ -d '"+distdir+"' ]; then rm -fr "+distdir+" ; fi", timeout=60)
@@ -1729,10 +1734,8 @@ class importAlf():
                     scp.send_dir(dirempty, override_mode=True, preserve_times=True)
                 os.rmdir(dirempty)
                 
-#                with closing(scpclient.Write(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
-#                    scp.send_file(self.conf['dir'] + self.confpack['PKGID'] + "/Sites.metadata.properties.xml", remote_filename="Sites.metadata.properties.xml")
-            
             pathdir = self.conf['dir'] + self.confpack['PKGID'] + "/Sites"
+
             with closing(scpclient.WriteDir(client.get_transport(), self.conf['importdir']+"/"+self.confpack['PKGID'])) as scp:
                 scp.send_dir(pathdir, override_mode=True, preserve_times=True)
                 
