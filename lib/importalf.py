@@ -233,6 +233,7 @@ class importAlf():
                 
                 if (os.path.exists(self.conf['dir'] + "Conf/list.csv") or os.path.exists(self.conf['dir'] + "Conf/list.xls") or os.path.exists(self.conf['dir'] + "Conf/list.xlsx")):
                     self.fileinfo = self.parse_csv()
+                    
                     self.logger("Nombre de documents : "+str(len(self.fileinfo)),"",silence)
 
                     fields = self.get_fieldsCSV()
@@ -243,6 +244,7 @@ class importAlf():
                     description = fields[self.confpack['desc']]
                     tags = fields[self.confpack['tags']]
                     path = fields[self.confpack['path']]
+                    
 
                     self.logger("","",silence)
                     self.logger("Vérification correspondance des champs :","",silence)
@@ -261,7 +263,7 @@ class importAlf():
                     for line in self.fileinfo:
                         if ( os.path.exists(self.conf['dir'] + "Orig/" +self.fileinfo[line]['name']) == False):
                             self.logger("","",silence)
-                            self.logger("Document du CSV manquant dans le répertoire","Error",silence)
+                            self.logger("Document PDF, listé dans le CSV, manquant dans le répertoire","Error",silence)
                             check_package_conf = False
                             break
                 else:
@@ -1114,15 +1116,18 @@ class importAlf():
         Quit.grid(sticky="E",row=r+1, column=1, padx=5)
         
     def testWkspace(self, path):
-        try:
-            client = CmisClient(self.conf['url'], self.conf['user'], self.conf['password'])
-            repo = client.defaultRepository
+        if ( path != "" ):
+            try:
+                client = CmisClient(self.conf['url'], self.conf['user'], self.conf['password'])
+                repo = client.defaultRepository
 
-            Folder = repo.getObjectByPath(path)
-            return [True,path + "' : OK", "Success"]
-        except Exception, e:
-            print e
-            return [False,path + "' : Introuvable", ""]
+                Folder = repo.getObjectByPath(path)
+                return [True,path + "' : OK", "Success"]
+            except Exception, e:
+                print e
+                return [False,path + "' : Introuvable", ""]
+        else:
+            return [False,"Champs destination vide", "Error"]
 
     def testCMIS(self):
         try:
@@ -1209,15 +1214,18 @@ class importAlf():
                         self.Force['state'] = "active"
                     return True
                 else:
-                    self.Force['state'] = "disabled"
-                    self.var1.set(0)
-                    self.logger("","",silence)
-                    self.logger("Test des destinations : dossiers manquants (sans conséquences en mode Bulk Import Tool)","",silence)
-                    self.logger("","",silence)
-                    self.logger("Pour le mode CMIS (mise à jour), le mode Bulk Import Tool doit être lancé en premier)","",silence)
-                    self.ButtonUpload['text'] = "Importer (mode Bulk Import)"
-                    if ( mode == "BULKIMPORTTOOL" ):
-                        return True
+                    if ( path != "" ):
+                        self.Force['state'] = "disabled"
+                        self.var1.set(0)
+                        self.logger("","",silence)
+                        self.logger("Test des destinations : dossiers manquants (sans conséquences en mode Bulk Import Tool)","",silence)
+                        self.logger("","",silence)
+                        self.logger("Pour le mode CMIS (mise à jour), le mode Bulk Import Tool doit être lancé en premier)","",silence)
+                        self.ButtonUpload['text'] = "Importer (mode Bulk Import)"
+                        if ( mode == "BULKIMPORTTOOL" ):
+                            return True
+                        else:
+                            return False
                     else:
                         return False
         else:
@@ -1304,7 +1312,7 @@ class importAlf():
         
         return fields
     
-        # Get files informations from XLS or CSV
+    # Get files informations from XLS or CSV
     def parse_csv(self):
         self.fileinfo = {}
         
@@ -1334,7 +1342,6 @@ class importAlf():
                 row = sh.row_values(rownum)
                 reader.append(row)
 
-
         for row in reader:
             if (firstline == 1):
                 firstline = 0
@@ -1343,6 +1350,7 @@ class importAlf():
                     fid = "%s" % int(row[0])
                 else:
                     fid = str(row[0])
+                
                 if ( self.confpack['listformat'] == "CSV"):
                     name = unicode(row[self.confpack['name']], "iso8859_1")
                     newname = unicode(row[self.confpack['newname']], "iso8859_1")
@@ -1384,10 +1392,10 @@ class importAlf():
                 self.fileinfo[idx]['properties'] = {}
 
                 self.fileinfo[idx]['properties'] = self.get_properties(self.fileinfo[idx]['properties'], row)
-
+                
         if ( self.confpack['listformat'] == "CSV" ):
             csvfile.close()
-            
+         
         return self.fileinfo
 
     def get_aspects(self):
@@ -1403,7 +1411,7 @@ class importAlf():
         if (os.path.exists(self.conf['dir'] + "Conf/properties.csv") == True):
             csvfile = open(self.conf['dir'] + 'Conf/properties.csv', "rb")
             reader = csv.reader(csvfile, delimiter=';', quotechar='"')
-            
+                            
             for row in reader:
                 if (row[2] == "DYN"):
                     if ( self.confpack['listformat'] == "CSV" ):
@@ -1420,13 +1428,16 @@ class importAlf():
 
                 if (row[1] == "DATE"):
                     sdate = tab[row[0]].split("/")
-                    tab[row[0]] = sdate[2] + "-" + sdate[1] + "-" + sdate[0] + "T00:00:00.000+00:00"
+                    try:
+                        tab[row[0]] = sdate[2] + "-" + sdate[1] + "-" + sdate[0] + "T00:00:00.000+00:00"
+                    except:
+                        self.logger("Un des champs '"+row[1]+"' ne contient pas une valeur correcte.","Error")
+                        tab[row[0]] = "01-01-1900T00:00:00.000+00:00"
                 if (row[1] == "TXT"):
                     if ( self.confpack['listformat'] == "CSV" ):
                         tab[row[0]] = unicode(tab[row[0]], "iso8859_1")
                 if (row[1] == "NUM"):
                     tab[row[0]] = int(tab[row[0]])
-            
             csvfile.close()
             return tab
         else:
